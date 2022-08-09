@@ -1,0 +1,10 @@
+####### General #######
+seed: 42
+id_exp: 3
+
+data:
+  image_size: 28
+  channel: 1
+  range: [0,1]
+  small_perc: 10
+  root: "./data/MNIST"
