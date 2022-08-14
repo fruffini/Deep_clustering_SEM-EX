@@ -28,13 +28,9 @@ class TrainOptions(BaseOptions):
             help='multiply by a gamma every lr_decay_iters iterations')
 
 
-        # Iterative learning
-        parser.add_argument('--k_max', type=int, default=2,  help='Iterative value for k (num of cluster) in list.')
-
-
-
         self.isTrain=True
         return parser
-
+    def print_options(self, opt):
+        super().print_options(opt=opt)
 
 

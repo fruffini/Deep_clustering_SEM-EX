@@ -130,7 +130,6 @@ class BaseOptions(object):
             opt.name = opt.name + suffix
 
 
-
         # set gpu ids
         str_ids = opt.gpu_ids.split(',')
         opt.gpu_ids = []
@@ -163,7 +162,7 @@ class BaseOptions(object):
         print(message)
 
         # save to the disk
-        file_name = os.path.join(opt.path_man.get_path("model_dir"), '{}_opt.txt'.format(opt.phase))
+        file_name = os.path.join(opt.path_man.get_path(opt.model_dir), '{}_opt.txt'.format(opt.phase))
         with open(file_name, 'wt') as opt_file:
             opt_file.write(message)
             opt_file.write('\n')

@@ -1,7 +1,7 @@
 """ Mix general pourpose functions"""
 import os
 import shutil
-from random import random
+import random
 import numpy as np
 import torch
 import yaml
@@ -52,12 +52,8 @@ def del_dir(path):
     if os.path.exists(path):
         shutil.rmtree(path)
 
-
-
-
-
-def seed_all(seed):  # for deterministic behaviour
-    if not seed:
+def seed_all(seed=None):  # for deterministic behaviour
+    if seed is None:
         seed = 42
     print("Using Seed : ", seed)
 
