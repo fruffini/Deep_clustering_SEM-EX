@@ -1,13 +1,10 @@
 import itertools
-import time
 from collections import OrderedDict
-
 import torch
 from torchvision.utils import save_image
-
-from src.models.DCEC.models.base_model import BaseModel
-from src.models.DCEC.models.networks import *
-from src.models.DCEC.util.util_clustering import kmeans
+from util.util_clustering import kmeans
+from .base_model import BaseModel
+from .networks import *
 torch.autograd.set_detect_anomaly(True)
 
 class DCECModel(BaseModel):

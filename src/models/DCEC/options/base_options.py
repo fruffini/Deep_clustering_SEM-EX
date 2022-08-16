@@ -1,10 +1,10 @@
 import argparse
-from src.utils.util_general import *
-from src.models.DCEC import models, data
+from util.util_general import *
+import models, dataset
 
 
 # Translate string entries to bool for parser
-from src.utils.util_path_manager import PathManager
+from src.models.DCEC.util.util_path_manager import PathManager
 
 
 def str2bool(v):
@@ -39,8 +39,11 @@ class BaseOptions(object):
             help='name of the experiment. It decides where to store samples and models')
         parser.add_argument('--use_wandb', action='store_true', help='use wandb')
         parser.add_argument('--gpu_ids', type=str, default='0', help='gpu ids: e.g. 0  0,1,2, 0,2. use -1 for CPU')
-        parser.add_argument('--reports_dir', type=str, default='./reports', help='models are saved here')
-
+        # Directories outside the src module
+        parser.add_argument('--reports_dir', type=str, default='./reports', help='Customized report direcrtory folder, else it would be put like /src/reports ' )
+        parser.add_argument('--config_dir', type=str, required=True, default="C:\\Users\\Ruffi\\Desktop\\Deep_clustering_SEM-EX\\configs", help='configs files folder IMPORTANT:'
+                                                                                                                                                ' 1) Dataset config.yaml, '
+                                                                                                                                                '2) Autoencoders_layers_config.yaml. ')
         # model parameters
         parser.add_argument('--model', default='DCEC', choices=['DCEC', 'VAE'], help='Model name for the experiment.')
         parser.add_argument('--AE_cfg_file', default='AE_layers_settings.yaml',
@@ -110,7 +113,7 @@ class BaseOptions(object):
         opt, _ = parser.parse_known_args()  # parse again with new defaults
         # modify dataset-related parser options
         dataset_name = opt.dataset_name
-        dataset_option_setter = data.get_option_setter(dataset_name)
+        dataset_option_setter = dataset.get_option_setter(dataset_name)
         parser = dataset_option_setter(parser, self.isTrain)
 
         # save and return the parser

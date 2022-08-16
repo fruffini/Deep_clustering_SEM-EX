@@ -1,17 +1,18 @@
 # Implementation of DEEP-CONVOLUTIONAL-EMBEDDED_CLUSTERING for semantic-extraction procedure
 # defined in the method SEM-EX
 # hello here
-
 from __future__ import print_function, division
 import sys
 import time
+import os
 from tqdm import tqdm
 from options.train_options import TrainOptions
 from models import create_model
-from src.models.DCEC.data import create_dataset
+from util import util_general
+from dataset import create_dataset
 from torchvision import transforms
-from src.utils.util_general import *
 
+import numpy as np
 
 def pretrain():
     # ----- PRETRAIN ------
@@ -124,7 +125,7 @@ if __name__ == '__main__':
     print(sys.argv)
     sys.path.extend(["./"])
     # Seed everything
-    seed_all()
+    util_general.seed_all()
     print(os.getcwd())
     # Debugging Only.
     sys.argv.extend(
@@ -132,7 +133,10 @@ if __name__ == '__main__':
             '--phase', 'train',
             '--AE_type', 'CAE3',
             '--dataset_name',
-            'MNIST']
+            'MNIST',
+            '--reports_dir', 'C:\\Users\\Ruffi\\Desktop\\Deep_clustering_SEM-EX\\reports',
+            '--config_dir', 'C:\\Users\\Ruffi\\Desktop\\Deep_clustering_SEM-EX\\configs']
+
     )
     #  _______________________________________________________________________________________________
     #  _______________________________________________________________________________________________
@@ -152,7 +156,7 @@ if __name__ == '__main__':
 
     #  _______________________________________________________________________________________________
     #  _______________________________________________________________________________________________
-    #           TRAINING / PRETRAINING
+    #           ITERATIVE TRAINING / PRETRAINING
     #  _______________________________________________________________________________________________
     #  _______________________________________________________________________________________________
 

@@ -1,4 +1,4 @@
-"""This module implementes an abstract class ABC 'BaseDataset for datasets"""
+"""This module implements an abstract class ABC 'BaseDataset for datasets"""
 import random
 from abc import ABC, abstractmethod
 

@@ -1,8 +1,7 @@
 import importlib
 
 import torch
-
-from src.models.DCEC.data.base_dataset import BaseDataset
+from .base_dataset import BaseDataset
 def find_dataset_using_name(dataset_name):
     """Import the module "data/[dataset_name]_dataset.py".
 

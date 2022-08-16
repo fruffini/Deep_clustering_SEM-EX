@@ -1,10 +1,10 @@
 from __future__ import print_function
-from src.models.DCEC.data.base_dataset import BaseDataset
+from dataset.base_dataset import BaseDataset
+from util.util_general import *
 from PIL import Image
 import os.path
 import errno
 import codecs
-from src.utils.util_general import *
 from easydict import EasyDict as edict
 
 class MNISTDataset(BaseDataset):
@@ -36,8 +36,7 @@ class MNISTDataset(BaseDataset):
 
     def __init__(self, opt, transform=None, target_transform=None):
         BaseDataset.__init__(self, opt)
-        self.opt = opt
-        self.config = edict(load_config('MNIST_configuration.yaml'))
+        self.config = edict(load_config('MNIST_configuration.yaml', self.opt.config_dir))
         self.root = os.path.expanduser(self.config.data.root)
         self.type = opt.mnist_mode
         self.transform = transform

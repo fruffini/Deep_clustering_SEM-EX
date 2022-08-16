@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from collections import OrderedDict
 import torch
 from easydict import EasyDict
-from src.models.DCEC.models import networks
+from models import networks
 
 
 class BaseModel(ABC):

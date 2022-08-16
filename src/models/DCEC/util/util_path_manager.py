@@ -1,9 +1,8 @@
 """ Class to manage the Folders/Subfolders Paths for wxperiments"""
 import os
-import shutil
 
 from easydict import EasyDict
-from src.utils.util_general import mkdirs, mkdir, del_dir
+from util.util_general import mkdir
 
 
 class PathManager(object):
@@ -14,15 +13,18 @@ class PathManager(object):
         #   PATH  #    (_)   (_)   /    ;
          `#    #'                 /   .'
            `##'                   "=="
-
+    This class implements a series of fuctions aided to create the architecture of folders needed to
+    realize the experimental setup
+    Parameters:
+        opt (Option class)-- Options needed to complete the setup of the dataset.
     """
 
     def __init__(self, opt):
-
         # Options
         self.opt = opt
-        # Main directory of the experiment
+        # ---------------- Main directory of the experiment
         self.main_dir = os.path.join(opt.reports_dir, opt.name + '_' + opt.dataset_name)
+        # Fix the main experimental folder, if it's the default one, experiments will be saved inside <./src/reports> folder.
         self.paths = EasyDict()
         # This state defines which sub folder of the main wxperiment has to be taken. It could be pretrain/train/
         # set the phase reference in the paths dictionary tree.
