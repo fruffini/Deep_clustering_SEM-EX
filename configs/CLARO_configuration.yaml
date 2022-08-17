@@ -1,4 +1,4 @@
-// Modify the path folder for your local experiment.
+### CLARO Dataset ###
 
 seed: 42
 
@@ -7,4 +7,4 @@ data:
   channel: 1
   range: [0,1]
   small_perc: 10
-  root: "./data/CLARO" // Modify the path folder for your local experiment.
+  root: "./data/CLARO" # Modify the path folder for your local experiment.
