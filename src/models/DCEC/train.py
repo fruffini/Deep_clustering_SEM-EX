@@ -19,7 +19,6 @@ import numpy as np
 def pretrain():
     # ----- PRETRAIN ------
     total_iters = 0  # the total number of training iterations
-    OptionstTrain.print_options(opt=opt)  # options printing and saving
     for epoch in range(opt.epoch_count, opt.n_epochs + opt.n_epochs_decay + 1):  # outer loop for different epochs
         # Train the model for each value inside the k_values option list
         epoch_iter = 0
