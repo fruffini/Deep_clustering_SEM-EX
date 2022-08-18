@@ -6,4 +6,3 @@ data:
   image_size: 512
   channel: 1
   range: [0,1]
-  small_perc: 10

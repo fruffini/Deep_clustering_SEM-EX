@@ -30,7 +30,7 @@ class TrainOptions(BaseOptions):
 
         self.isTrain=True
         return parser
-    def print_options(self, opt):
-        super().print_options(opt=opt)
+    def print_options(self, opt, path_log_run):
+        super().print_options(opt=opt, path_log_run=path_log_run)
 
 

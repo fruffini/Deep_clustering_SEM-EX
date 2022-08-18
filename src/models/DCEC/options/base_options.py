@@ -3,7 +3,7 @@ import models, dataset
 import torch
 import os
 # Translate string entries to bool for parser
-from util.util_path_manager import PathManager
+from util.util_path import PathManager
 
 
 def str2bool(v):
@@ -145,7 +145,7 @@ class BaseOptions(object):
 
         self.opt = opt
         return self.opt
-    def print_options(self, opt):
+    def print_options(self, opt, path_log_run : str ):
         """Print and save options
 
         It will print both current options and default values(if different).
@@ -165,7 +165,7 @@ class BaseOptions(object):
         print(message)
 
         # save to the disk
-        file_name = os.path.join(opt.path_man.get_path(opt.model_dir), '{}_opt.txt'.format(opt.phase))
+        file_name = os.path.join(path_log_run, '{}_opt.txt'.format(opt.phase))
         with open(file_name, 'wt') as opt_file:
             opt_file.write(message)
             opt_file.write('\n')

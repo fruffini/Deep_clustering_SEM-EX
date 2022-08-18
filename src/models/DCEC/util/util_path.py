@@ -126,7 +126,7 @@ class PathManager(object):
                 self.clean_dir(new_path)
             self.dict_phase.__setattr__("%s_dir" % (name_att if name_att != "" else path_ext), new_path)
 
-            return print("The %s folder successfully created extending the path: %s ." % (path_ext, dir_to_extend))
+            return print("The %s folder successfully created extending the path: %s ." % (path_ext, path))
 
     def get_path_phase(self, name, phase):
         """ Get method that returns the items inside the dictionary of paths in relation to the selected phase
@@ -168,3 +168,31 @@ class PathManager(object):
 
     def __repr__(self):
         return self.__class__.__name__
+
+
+def get_next_run_id_local(run_dir_root: str, module_name: str) -> int:
+    """Reads all directory names in a given directory (non-recursive) and returns the next (increasing) run id. Assumes IDs are numbers at the start of the directory names."""
+    import re
+    #dir_names = [d for d in os.listdir(run_dir_root) if os.path.isdir(os.path.join(run_dir_root, d))]
+    #dir_names = [d for d in os.listdir(run_dir_root) if os.path.isdir(os.path.join(run_dir_root, d)) and d.split('--')[1] == module_name]
+    dir_names = []
+    for d in os.listdir(run_dir_root):
+        if not 'configuration.yaml' in d and not 'log.txt' in d and not 'src' in d:
+            try:
+                if os.path.isdir(os.path.join(run_dir_root, d)) and d.split('--')[1] == module_name:
+                    dir_names.append(d)
+            except IndexError:
+                if os.path.isdir(os.path.join(run_dir_root, d)):
+                    dir_names.append(d)
+
+    r = re.compile("^\\d+")  # match one or more digits at the start of the string
+    run_id = 1
+
+    for dir_name in dir_names:
+        m = r.match(dir_name)
+
+        if m is not None:
+            i = int(m.group())
+            run_id = max(run_id, i + 1)
+
+    return run_id

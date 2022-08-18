@@ -6,6 +6,8 @@ import sys
 import time
 import os
 from tqdm import tqdm
+
+from util.util_path import get_next_run_id_local
 from options.train_options import TrainOptions
 from models import create_model
 from util import util_general
@@ -102,7 +104,7 @@ def iterative_training_over_k():
         opt.num_clusters = k  # set the number of clusters.
         model = create_model(opt=opt)
         model.setup(opt=opt)
-        OptionstTrain.print_options(opt=opt)
+
         if opt.phase == "train":  # train phase
             if model.load_model_pretrained():
                 train()
@@ -122,11 +124,11 @@ def iterative_training_over_k():
 if __name__ == '__main__':
     #  _______________________________________________________________________________________________
     # System Settings
-    print(sys.argv)
     sys.path.extend(["./"])
+
     # Seed everything
     util_general.seed_all()
-    print(os.getcwd())
+    print("Running path for the experiment:", os.getcwd())
     # Debugging Only.
     sys.argv.extend(
         [
@@ -148,7 +150,24 @@ if __name__ == '__main__':
     opt.n_epochs = 3  # Debug
     opt.n_epochs_decay = 3  # Debug
     #  _______________________________________________________________________________________________
+    # Submit run:
+    print("Submit run")
+    run_module = os.path.basename(__file__)
+    run_id = get_next_run_id_local(os.path.join('log_run', opt.dataset_name), run_module)  # GET run id
+    run_name = "{0:05d}--{1}--EXP_{2}".format(run_id, run_module, opt.id_exp)
+    log_dir = os.path.join('log_run', opt.dataset_name, run_name)
+    util_general.mkdir(log_dir)
     #  _______________________________________________________________________________________________
+    # Initialize Logger - run folder
+    OptionstTrain.print_options(opt=opt, path_log_run=log_dir)
+    logger = util_general.Logger(file_name=os.path.join(log_dir, 'log.txt'), file_mode="w", should_flush=True)
+    #  _______________________________________________________________________________________________
+    # Welcome
+    from datetime import datetime
+    now = datetime.now()
+    date_time = now.strftime("%d/%m/%Y, %H:%M:%S")
+    print("Hello!", date_time)
+
     # Dataset Options
     dataset = create_dataset(opt)
     dataset.set_tranform(transform=transforms.ToTensor())
