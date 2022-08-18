@@ -2,9 +2,7 @@
 import os
 
 from easydict import EasyDict
-
-import util_general
-from util.util_general import mkdir
+from util import util_general
 
 
 class PathManager(object):
@@ -68,7 +66,7 @@ class PathManager(object):
                 self.paths['{}'.format(phase)] = EasyDict()
                 self.dict_phase = self.get_dict_phase(phase=self.state)
                 phase_dir = os.path.join(self.main_dir, phase)
-                mkdir(phase_dir)  # phase directory creation
+                util_general.mkdir(phase_dir)  # phase directory creation
                 self.dict_phase.__setattr__("%s_dir" % "phase", phase_dir)
                 print("The phase %s has been created in the paths dictionary!" % (phase))
                 return
@@ -82,7 +80,7 @@ class PathManager(object):
             self.dict_phase = self.get_dict_phase(phase=self.state)
             # phase directory creation and insertion into path manager
             phase_dir = os.path.join(self.main_dir, phase)
-            mkdir(phase_dir)
+            util_general.mkdir(phase_dir)
             self.dict_phase.__setattr__("%s_dir" % "phase", phase_dir)
             print("The phase %s has been created in the paths dictionary!" % (phase))
             return
@@ -98,7 +96,7 @@ class PathManager(object):
         directories = ['weights', 'plots', 'logs']  # create 3 subfoldings for weights files, logs  and plots.
         model_dir = "%s_dir" % (model if model.__len__() > 0 else "model")
         self.dict_phase.__setattr__(model_dir, os.path.join(self.get_path('save_dir'), self.opt.AE_type if model.__len__() == 0 else model))  # Model directory
-        list(map(mkdir, [os.path.join(self.get_path(model_dir), dir) for dir in directories]))  # Create three subfolders for weights, plots and logs.
+        list(map(util_general.mkdir, [os.path.join(self.get_path(model_dir), dir) for dir in directories]))  # Create three subfolders for weights, plots and logs.
         # Extend directories tree from model directory.
         for dir, path in zip(sorted(directories), filter(os.path.isdir, os.scandir(self.get_path(model_dir)))):
             self.set_dir(dir_to_extend="%s" % model_dir, path_ext=dir)
@@ -123,7 +121,7 @@ class PathManager(object):
         path = self.get_path(dir_to_extend)
         if isinstance(path_ext, str):
             new_path = os.path.join(path, path_ext)
-            mkdir(new_path)  # create directory if not exist
+            util_general.mkdir(new_path)  # create directory if not exist
             if os.path.exists(new_path) and force:
                 self.clean_dir(new_path)
             self.dict_phase.__setattr__("%s_dir" % (name_att if name_att != "" else path_ext), new_path)
