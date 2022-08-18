@@ -1,9 +1,9 @@
 import os
 from abc import ABC, abstractmethod
 from collections import OrderedDict
-
 import torch
-from src.models.DCEC.models import networks
+from easydict import EasyDict
+from models import networks
 
 
 class BaseModel(ABC):
@@ -21,7 +21,7 @@ class BaseModel(ABC):
              opt (Option class)-- stores all the esperiments flags; need to be a subclass of Baseoptions.
 
         """
-        self.name = self.__class__.__name__
+
         self.opt = opt
         self.gpu_ids = opt.gpu_ids
         self.isTrain = opt.isTrain
@@ -30,7 +30,7 @@ class BaseModel(ABC):
         self.loss_names = []
         self.model_names = []
         self.visual_names = []
-        self.optimizers = []
+        self.optimizers = EasyDict()
         self.image_paths = []
         self.metric = 0  # used for learning rate policy 'plateau'
     @staticmethod
@@ -60,15 +60,22 @@ class BaseModel(ABC):
     def accumulate_losses(self):
         """Accumulate losses"""
         pass
+    @abstractmethod
+    def compute_metrics(self):
+        """Compute metrics"""
+        pass
 
 
     @abstractmethod
     def optimize_parameters(self):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
         pass
-    def get_path(self, name):
+
+    def get_path_phase(self, name, phase=None):
         """Function to generate tree off folders to save experiments"""
-        return self.opt.path_man.get_path(name=name)
+
+        return self.opt.path_man.get_path(name=name) if phase is None else self.opt.path_man.get_path_phase(name=name, phase=phase)
+
     def get_current_losses(self):
         """Return training losses/errors."""
         losses = OrderedDict()
@@ -84,6 +91,9 @@ class BaseModel(ABC):
     def set_losses_dict(self, losses):
         """Set the dictionary to store the history of losses during the training"""
         self.losses_dict = {loss: list for loss in self.loss_names}
+    def set_metrics_dict(self):
+        """"""
+        pass
 
     def setup(self, opt):
         """Load and print networks; create schedulers
@@ -93,7 +103,7 @@ class BaseModel(ABC):
         """
         if self.isTrain:
         # Add schedulers to class BaseModel.
-            self.schedulers = [networks.get_scheduler(optimizer, opt) for optimizer in self.optimizers]
+            self.schedulers = {key_phase: networks.get_scheduler(optimizer, opt) for key_phase, optimizer in self.optimizers.items()}
         if not self.isTrain or opt.continue_train:
             load_suffix = 'iter_%d' % opt.load_iter if opt.load_iter > 0 else opt.epoch
             self.load_networks(load_suffix)
@@ -101,15 +111,15 @@ class BaseModel(ABC):
 
     def update_learning_rate(self):
         """Update learning rates for all the networks; called at the end of every epoch"""
-        for optimizer, scheduler in zip(self.optimizers, self.schedulers):
-            old_lr = optimizer.param_groups[0]['lr']
-            if self.opt.lr_policy == 'plateau':
-                scheduler.step(self.metric)
-            else:
-                scheduler.step()
-
-            lr = optimizer.param_groups[0]['lr']
-            print('optimizer: %.7s  --learning rate %.7f -> %.7f' % (optimizer.__class__.__name__, old_lr, lr))
+        phase = self.opt.phase
+        old_lr = self.optimizers[phase].param_groups[0]['lr']
+        if self.opt.lr_policy == 'plateau':
+            self.schedulers[phase].step(self.metric)
+        else:
+            self.schedulers[phase].step()
+        lr = self.optimizers[phase].param_groups[0]['lr']
+        if self.opt.verbose:
+            print('optimizer: %.7s  --learning rate %.7f -> %.7f' % (self.optimizers[phase].__class__.__name__, old_lr, lr) if not old_lr==lr else 'Learning rate non modificato: %s' %(old_lr))
 
     def save_networks(self, epoch):
         """Save all the networks to the disk.
@@ -121,7 +131,7 @@ class BaseModel(ABC):
         for name in self.model_names:
             if isinstance(name, str):
                 save_filename = '%s_net_%s.pth' % (epoch, name)
-                save_path = os.path.join(self.get_path("weights_dir"), save_filename)
+                save_path = os.path.join(self.get_path_phase("weights_dir"), save_filename)
                 net = getattr(self, 'net' + name)
 
                 if len(self.gpu_ids) > 0 and torch.cuda.is_available():
@@ -155,8 +165,10 @@ class BaseModel(ABC):
                     state_dict = torch.load(load_path, map_location=str(self.device))
                     if hasattr(state_dict, '_metadata'):
                         del state_dict._metadata
+                    net.load_state_dict(state_dict)  # loading model weights
                     returned = True
         return returned
+
     def print_networks(self, verbose):
         """Print the total number of parameters in the network and (if verbose) network architecture
 

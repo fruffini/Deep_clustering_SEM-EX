@@ -1,9 +1,8 @@
 """ Class to manage the Folders/Subfolders Paths for wxperiments"""
 import os
-import shutil
 
 from easydict import EasyDict
-from src.utils.util_general import mkdirs, mkdir, del_dir
+from util.util_general import mkdir
 
 
 class PathManager(object):
@@ -14,15 +13,18 @@ class PathManager(object):
         #   PATH  #    (_)   (_)   /    ;
          `#    #'                 /   .'
            `##'                   "=="
-
+    This class implements a series of fuctions aided to create the architecture of folders needed to
+    realize the experimental setup
+    Parameters:
+        opt (Option class)-- Options needed to complete the setup of the dataset.
     """
 
     def __init__(self, opt):
-
         # Options
         self.opt = opt
-        # Main directory of the experiment
+        # ---------------- Main directory of the experiment
         self.main_dir = os.path.join(opt.reports_dir, opt.name + '_' + opt.dataset_name)
+        # Fix the main experimental folder, if it's the default one, experiments will be saved inside <./src/reports> folder.
         self.paths = EasyDict()
         # This state defines which sub folder of the main wxperiment has to be taken. It could be pretrain/train/
         # set the phase reference in the paths dictionary tree.
@@ -30,9 +32,13 @@ class PathManager(object):
         self.auto_enumerate()
 
     def set_phase(self, phase):
+        """
+        Settings the phase in the path manager
+        :param phase (str): the new phase string to set in the path Manager.
+        """
         self.state = phase
-        self.check_phase_paths()
-        self.dict_phase = self.get_dict_phase(phase=self.state)
+        self.check_phase_paths()  # check if paths have just been set inside the path manager
+        self.dict_phase = self.get_dict_phase(phase=self.state)  # the dictionary phase is a pointer to the phase dictionary of paths.
 
     def get_dict_phase(self, phase):
         """Return the dictionary in relation with the specific phase
@@ -40,8 +46,6 @@ class PathManager(object):
                 phase (str): defines the phase. pretrain/train/test
             :returns
             <class EasyDict>, paths inside the phase folder of the dictionary
-
-
         """
         return self.paths.__getattribute__(phase)
 
@@ -58,18 +62,30 @@ class PathManager(object):
         phase = self.state
         if self.paths.__len__() > 0:
             if not phase in self.paths.keys():
+                # Different from first initialization of the phase
                 self.paths['{}'.format(phase)] = EasyDict()
                 self.dict_phase = self.get_dict_phase(phase=self.state)
+                phase_dir = os.path.join(self.main_dir, phase)
+                mkdir(phase_dir)  # phase directory creation
+                self.dict_phase.__setattr__("%s_dir" % "phase", phase_dir)
+                print("The phase %s has been created in the paths dictionary!" % (phase))
+                return
             else:
-                print("Fase già inizializzata")
+                print("Phase paths already exists!")
+                return
 
         else:
-            print("La fase %s è stata inizializzata nel dizionario dei paths ." % (phase))
+            # First initialization of the phase
             self.paths['{}'.format(phase)] = EasyDict()
             self.dict_phase = self.get_dict_phase(phase=self.state)
-        phase_dir = os.path.join(self.main_dir, phase)
-        mkdir(phase_dir)  # phase directory creation
-        self.dict_phase.__setattr__("%s_dir" % "phase", phase_dir)
+            # phase directory creation and insertion into path manager
+            phase_dir = os.path.join(self.main_dir, phase)
+            mkdir(phase_dir)
+            self.dict_phase.__setattr__("%s_dir" % "phase", phase_dir)
+            print("The phase %s has been created in the paths dictionary!" % (phase))
+            return
+
+
 
     def initialize_model(self, model=str()):
         """ Initialize sub-foldings
@@ -110,7 +126,15 @@ class PathManager(object):
                 self.clean_dir(new_path)
             self.dict_phase.__setattr__("%s_dir" % (name_att if name_att != "" else path_ext), new_path)
 
-            return print("The %s folder successfully created." % path_ext)
+            return print("The %s folder successfully created extending the path: %s ." % (path_ext, dir_to_extend))
+
+    def get_path_phase(self, name, phase):
+        """ Get method that returns the items inside the dictionary of paths in relation to the selected phase
+            Parameters:
+                name (str): name of the path attribute in the dictionary
+
+        """
+        return self.paths.__getattribute__(phase).__getattribute__(name)
 
     def get_path(self, name):
         """ Get method tha returns the items inside the dictionary of paths
@@ -125,6 +149,7 @@ class PathManager(object):
         """ Function that auto enumerate experiment by existing folders on disk """
         phase_dir = self.get_path('phase_dir')
         list_paths = os.listdir(phase_dir)
+        self.ID_max = None
         if not list_paths.__len__() == 0:
             for EXP_directory in list_paths:
                 if self.opt.id_exp in EXP_directory.split('_')[1]:
@@ -132,7 +157,7 @@ class PathManager(object):
                     return
                 elif self.opt.id_exp == 'auto':
                     # In auto mode the manager build a new root where to save the experiment, and assign the ID_# number searching for maximum ones.
-                    self.ID_max = max([int(''.join(filter(str.isdigit, path))) for path in list_paths])
+                    self.ID_max = max([int(''.join(filter(str.isdigit, path))) for path in list_paths]) if self.ID_max is not None else self.ID_max
                     self.set_dir(dir_to_extend='phase_dir', name_att="save", path_ext="EXP_ID{}".format(self.ID_max + 1))
                     return
                 else:

@@ -1,0 +1,10 @@
+### CLARO Dataset ###
+
+seed: 42
+
+data:
+  image_size: 512
+  channel: 1
+  range: [0,1]
+  small_perc: 10
+  root: "./data/CLARO" # Modify the path folder for your local experiment.

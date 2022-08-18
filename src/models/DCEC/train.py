@@ -1,21 +1,23 @@
 # Implementation of DEEP-CONVOLUTIONAL-EMBEDDED_CLUSTERING for semantic-extraction procedure
 # defined in the method SEM-EX
 # hello here
-
 from __future__ import print_function, division
 import sys
 import time
+import os
 from tqdm import tqdm
 from options.train_options import TrainOptions
 from models import create_model
-from src.models.DCEC.data import create_dataset
+from util import util_general
+from dataset import create_dataset
 from torchvision import transforms
-from src.utils.util_general import *
 
+import numpy as np
 
 def pretrain():
     # ----- PRETRAIN ------
     total_iters = 0  # the total number of training iterations
+    OptionstTrain.print_options(opt=opt)  # options printing and saving
     for epoch in range(opt.epoch_count, opt.n_epochs + opt.n_epochs_decay + 1):  # outer loop for different epochs
         # Train the model for each value inside the k_values option list
         epoch_iter = 0
@@ -43,13 +45,14 @@ def train():
     # ----- TRAIN ------
     # starting procedure for training
     model.prepare_training(dataloader=dataset.dataloader)
-    exit_ = False # training exit condition
+    exit_ = False  # training exit condition
     total_iters = 0  # the total number of training iterations
-    batch_iters = 0  # total batch processed
+    batch_iters = 0  # the total number of batch processed
     for epoch in range(opt.epoch_count, opt.n_epochs + opt.n_epochs_decay + 1):  # outer loop for different epochs
         # Train the model for each value inside the k_values option list
-        epoch_iter = 0
-        model.update_learning_rate() if not epoch_iter == 0 else model.do_nothing()  # update learning rates linked to optimizer,
+        epoch_start_time = time.time()  # timer for entire epoch
+        epoch_iter = 0  # the total number of training iterations during a single epoch
+        model.update_learning_rate() if not total_iters == 0 else model.do_nothing()  # update learning rates linked to optimizers.
         with tqdm(dataset.dataloader, unit="batch", desc="Progress bar training phase") as tqdm_train:
             for ind, data in enumerate(tqdm_train):
                 tqdm_train.set_description(f"Epoch {epoch}")
@@ -71,7 +74,7 @@ def train():
                 model.accumulate_losses()  # accumulate losses in a dictionary
 
                 if total_iters % opt.save_latest_freq == 0:  # cache our latest model every <save_latest_freq> iterations
-                    print('saving the latest model (epoch %d, total_iters %d)' % (epoch, total_iters))
+                    print('saving the latest model (epoch %d, total_iters %d)' % (epoch, total_iters), )
                     save_suffix = 'iter_%d' % total_iters if opt.save_by_iter else 'latest'
                     model.save_networks(save_suffix)
                     model.save_image_reconstructed(epoch=epoch)
@@ -82,67 +85,87 @@ def train():
                 break
             else:
                 continue
-if __name__ == '__main__':
-    print(sys.argv)
-    sys.path.extend(["./"])
-    # Seed everything
-
-    print(os.getcwd())
-    # Debugging Only.
-    sys.argv.extend([
-        '--phase','pretrain',
-        '--AE_type', 'CAE3',
-        '--dataset_name',
-        'MNIST'])
-    #
-
-    opt = TrainOptions().parse()
-    opt.img_shape = (28, 28)
-    opt.verbose = False
-
-    model = create_model(opt=opt)
-    model.setup(opt=opt)
 
 
-    dataset = create_dataset(opt)
-    dataset.set_tranform(transform=transforms.ToTensor())
-    opt.dataset_size = dataset.__len__()
-    model.set_pretrain_folders()
-    if opt.phase == "train":
-        if model.load_model_pretrained():
-            train()
-        else:
-            pretrain()
-            train()
-    elif opt.phase == "pretrain":
-        pretrain()
-    # pretrain procedure
-
-
+def iterative_training_over_k():
     # ------ ITERATIVE TRAINING OVER k ------
     # Training for k_num of clusters variable through list values of parameters' list.
     # k parameters values
-    opt.k_values = list(np.arange(2, opt.k_max + 1))
-    for i, k in enumerate(opt.k_values):    # outer loop for different model instanced with different cluster number intialization MODEL_k -> MODEL_k+1
+    global model
+    for k in np.arange(opt.k_0, opt.k_fin + 1):  # outer loop for different model instanced with different cluster number intialization MODEL_k -> MODEL_k+1
+        #  _______________________________________________________________________________________________
+        print(f"\n _______________________________________________________________________________________________ "
+              f"\n INFORMATION: the current number of clusters is {k} "
+              f"\n _______________________________________________________________________________________________")
+        #  _______________________________________________________________________________________________
+        # Model selection and setup
+        opt.num_clusters = k  # set the number of clusters.
+        model = create_model(opt=opt)
+        model.setup(opt=opt)
+        OptionstTrain.print_options(opt=opt)
+        if opt.phase == "train":  # train phase
+            if model.load_model_pretrained():
+                train()
+                print(
+                    f"\n _______________________________________________________________________________________________ "
+                    f"\n INFORMATION: the DCEC model with the number of clusters equal to {k} has been trained.  "
+                    f"\n _______________________________________________________________________________________________"
+                    )
+            else:
+                raise NotImplementedError(" Pretrained weights not implemented, please launch experiment with --phase <pretrain>")
 
-        print("HELLO")
+        #  _______________________________________________________________________________________________
+        #  _______________________________________________________________________________________________
 
 
 
+if __name__ == '__main__':
+    #  _______________________________________________________________________________________________
+    # System Settings
+    print(sys.argv)
+    sys.path.extend(["./"])
+    # Seed everything
+    util_general.seed_all()
+    print(os.getcwd())
+    # Debugging Only.
+    sys.argv.extend(
+        [
+            '--phase', 'train',
+            '--AE_type', 'CAE3',
+            '--dataset_name',
+            'MNIST',
+            '--reports_dir', 'C:\\Users\\Ruffi\\Desktop\\Deep_clustering_SEM-EX\\reports',
+            '--config_dir', 'C:\\Users\\Ruffi\\Desktop\\Deep_clustering_SEM-EX\\configs']
 
+    )
+    #  _______________________________________________________________________________________________
+    #  _______________________________________________________________________________________________
+    # Experiment Options
+    OptionstTrain = TrainOptions()
+    opt = OptionstTrain.parse()
+    opt.img_shape = (28, 28)
+    opt.verbose = False
+    opt.n_epochs = 3  # Debug
+    opt.n_epochs_decay = 3  # Debug
+    #  _______________________________________________________________________________________________
+    #  _______________________________________________________________________________________________
+    # Dataset Options
+    dataset = create_dataset(opt)
+    dataset.set_tranform(transform=transforms.ToTensor())
+    opt.dataset_size = dataset.__len__()
 
+    #  _______________________________________________________________________________________________
+    #  _______________________________________________________________________________________________
+    #           ITERATIVE TRAINING / PRETRAINING
+    #  _______________________________________________________________________________________________
+    #  _______________________________________________________________________________________________
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+    dict_phase = {"train": 1, "pretrain": 0}
+    if dict_phase[opt.phase]:
+        iterative_training_over_k()
+    else:
+        # Model Definition
+        model = create_model(opt=opt)
+        model.setup(opt=opt)
+        pretrain()
 
