@@ -40,10 +40,11 @@ class BaseOptions(object):
         parser.add_argument('--gpu_ids', type=str, default='0', help='gpu ids: e.g. 0  0,1,2, 0,2. use -1 for CPU')
         # Directories outside the src module
         parser.add_argument('--reports_dir', type=str, default='./reports', help='Customized report direcrtory folder, else it would be put like /src/reports ' )
-        parser.add_argument('--config_dir', type=str, required=True, default="C:\\Users\\Ruffi\\Desktop\\Deep_clustering_SEM-EX\\configs", help='configs files folder IMPORTANT:'
-                                                                                                                                                ' 1) Dataset config.yaml, '
-                                                                                                                                                '2) Autoencoders_layers_config.yaml. ')
-        # model parameters
+        parser.add_argument('--config_dir', type=str, required=True, default="C:\\Users\\Ruffi\\Desktop\\Deep_clustering_SEM-EX\\configs", help='configs files folder IMPORTANT:')
+        parser.add_argument('--data_dir', type=str, default="./data", help='Data directory, ./data default.')
+
+
+
         parser.add_argument('--model', default='DCEC', choices=['DCEC', 'VAE'], help='Model name for the experiment.')
         parser.add_argument('--AE_cfg_file', default='AE_layers_settings.yaml',
              help='Layers setting file for CAE')

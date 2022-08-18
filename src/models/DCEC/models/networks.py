@@ -258,7 +258,7 @@ class Encoder(torch.nn.Module):
             config layers (dict): the dictionary with every sinngle layer parameters settings.
         """
         self.latent_dimension = self.opt.embedded_dimension
-        return edict(load_config(self.opt.AE_cfg_file)[self.opt.AE_type])
+        return edict(load_config(self.opt.AE_cfg_file, self.opt.config_dir)[self.opt.AE_type])
 
     def _build_conv_encoder(self):
         """
@@ -370,7 +370,7 @@ class Decoder(nn.Module):
             config layers (dict): the dictionary with every sinngle layer parameters settings.
         """
         self.latent_dimension = self.opt.embedded_dimension
-        return edict(load_config(self.opt.AE_cfg_file)[self.opt.AE_type])
+        return edict(load_config(self.opt.AE_cfg_file, self.opt.config_dir)[self.opt.AE_type])
 
     def _build_transpose_convolution_layers(self):
         """Bulding of convolutional transpose component of netD network.

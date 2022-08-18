@@ -37,7 +37,7 @@ class MNISTDataset(BaseDataset):
     def __init__(self, opt, transform=None, target_transform=None):
         BaseDataset.__init__(self, opt)
         self.config = edict(load_config('MNIST_configuration.yaml', self.opt.config_dir))
-        self.root = os.path.expanduser(self.config.data.root)
+        self.root = os.path.expanduser(os.path.join(self.opt.data_dir,'MNIST' ))
         self.type = opt.mnist_mode
         self.transform = transform
         self.target_transform = target_transform

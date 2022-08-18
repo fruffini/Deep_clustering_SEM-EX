@@ -9,6 +9,7 @@
       <sourceFolder url="file://$MODULE_DIR$/src/models/DCEC/options" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/models/DCEC/util" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/models/DCEC/bash" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/models/DCEC/data" isTestSource="false" />
     </content>
     <orderEntry type="jdk" jdkName="Python 3.9 (envProject)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
