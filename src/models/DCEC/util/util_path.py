@@ -2,6 +2,8 @@
 import os
 
 from easydict import EasyDict
+
+import util_general
 from util.util_general import mkdir
 
 
@@ -176,6 +178,7 @@ def get_next_run_id_local(run_dir_root: str, module_name: str) -> int:
     #dir_names = [d for d in os.listdir(run_dir_root) if os.path.isdir(os.path.join(run_dir_root, d))]
     #dir_names = [d for d in os.listdir(run_dir_root) if os.path.isdir(os.path.join(run_dir_root, d)) and d.split('--')[1] == module_name]
     dir_names = []
+    util_general.mkdir(run_dir_root)
     for d in os.listdir(run_dir_root):
         if not 'configuration.yaml' in d and not 'log.txt' in d and not 'src' in d:
             try:
