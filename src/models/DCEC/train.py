@@ -180,7 +180,7 @@ if __name__ == '__main__':
     #  _______________________________________________________________________________________________
     #  _______________________________________________________________________________________________
     for x, id_patient, id_slice in dataset.dataloader:
-        print(str().join([id_patient, id_slice]))
+        print(id_patient, id_slice)
     dict_phase = {"train": 1, "pretrain": 0}
     if dict_phase[opt.phase]:
         iterative_training_over_k()
