@@ -15,7 +15,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
   <component name="PackageRequirementsSettings">
-    <option name="versionSpecifier" value="Greater or equal (&gt;=x.y.z)" />
+    <option name="requirementsPath" value="C:\Users\Ruffi\Desktop\Deep_clustering_SEM-EX\requirements\requirements.txt" />
     <option name="removeUnused" value="true" />
   </component>
 </module>

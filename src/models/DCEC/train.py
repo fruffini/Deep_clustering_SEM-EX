@@ -128,7 +128,7 @@ if __name__ == '__main__':
     # Seed everything
     util_general.seed_all()
     print("Running path for the experiment:", os.getcwd())
-    # Debugging Only.
+    """    # Debugging Only.
     sys.argv.extend(
         [
             '--phase', 'train',
@@ -140,7 +140,7 @@ if __name__ == '__main__':
             '--data_dir', 'C:\\Users\\Ruffi\\Desktop\\Deep_clustering_SEM-EX\\data\\claro'
             ]
 
-    )
+    )"""
     #  _______________________________________________________________________________________________
     #  _______________________________________________________________________________________________
     # Experiment Options
