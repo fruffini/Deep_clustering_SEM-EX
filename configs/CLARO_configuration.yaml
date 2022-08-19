@@ -8,8 +8,8 @@ data:
   range: [0,1]
 
   data_dir: data_raw
-  interim_dir: interim\claro
-  raw_dir: raw\claro
+  interim_dir: interim/claro
+  raw_dir: raw/claro
   box_file: data.xlsx
   box_value: max_box #box
   data_info: patients_info_claro.xlsx
