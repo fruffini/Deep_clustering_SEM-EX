@@ -165,9 +165,12 @@ class CLARODataset(BaseDataset):
             transform:           object = None):
         """Initialization"""
         BaseDataset.__init__(self, opt)
+        # Config and Directories
         self.config = edict(load_config('CLARO_configuration.yaml', config_directory=self.opt.config_dir))
         self.root_dir = self.opt.data_dir
+        self.raw_dir = os.path.join(self.root_dir, self.config['data']['raw_dir'])
         self.interim_dir = os.path.join(self.root_dir, self.config['data']['interim_dir'])
+
         self.transform = transform
         # Upload info claro
         self.info_claro = pd.read_excel(os.path.join(self.interim_dir, self.config['data']['data_info']))
@@ -184,6 +187,7 @@ class CLARODataset(BaseDataset):
         self.scale = self.config['data']['scale']
         self.convert_to_uint8 = self.config['data']['convert_to_uint8']
         self.scale_by_255 = scale_by_255
+        print("Dataset CLARO ready for train!")
 
     @staticmethod
     def modify_commandline_options(parser, is_train):
@@ -219,15 +223,16 @@ class CLARODataset(BaseDataset):
         """Generates one sample of data"""
         # Select sample
         row = self.data.iloc[index]
-        print(row)
-        row = row.split('_')
-        img_id = row[1]
-        patient_id = row[0]
+
+        row_name = row.name.split('_')
+        img_id = row_name[1]
+        patient_id = row_name[0]
         # load box
         box = self.boxes[patient_id + '_' + img_id] if self.boxes else None
         # Load data and get label
-        img_path = os.path.join(self.img_dir, patient_id, "images", f"{patient_id + '_' + img_id}.tif")
-        x = loader(img_path=img_path, img_dim=self.img_dim, box=box, clip=self.clip, scale=self.scale, convert_to_uint8=self.convert_to_uint8, scale_by_255=self.scale_by_255)
+        img_path = os.path.join(self.raw_dir, patient_id, "images", f"{patient_id + '_' + img_id}.tif")
+        x = loader(img_path=img_path, img_dim=self.config['data']['image_size'],
+                   box=box, clip=self.clip, scale=self.scale, convert_to_uint8=self.convert_to_uint8, scale_by_255=self.scale_by_255)
         if self.transform is not None:
             x = self.transform(x)
         return x, patient_id, img_id
