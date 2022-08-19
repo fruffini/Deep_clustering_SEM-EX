@@ -137,7 +137,7 @@ if __name__ == '__main__':
             'CLARO',
             '--reports_dir', 'C:\\Users\\Ruffi\\Desktop\\Deep_clustering_SEM-EX\\reports',
             '--config_dir', 'C:\\Users\\Ruffi\\Desktop\\Deep_clustering_SEM-EX\\configs',
-            '--data_dir', 'C:\\Users\\Ruffi\\Desktop\\Deep_clustering_SEM-EX\\data\\claro'
+            '--data_dir', 'C:\\Users\\Ruffi\\Desktop\\Deep_clustering_SEM-EX\\data'
             ]
 
     )"""
@@ -154,7 +154,7 @@ if __name__ == '__main__':
     # Submit run:
     print("Submit run")
     run_module = os.path.basename(__file__)
-    run_id = get_next_run_id_local(os.path.join('log_run', opt.dataset_name), run_module)  # GET run id
+    run_id = get_next_run_id_local(os.path.join('log_run', opt.dataset_name), opt.phase)  # GET run id
     run_name = "{0:05d}--{1}--EXP_{2}".format(run_id, run_module, opt.id_exp)
     log_dir = os.path.join('log_run', opt.dataset_name, run_name)
     util_general.mkdir(log_dir)
@@ -171,7 +171,7 @@ if __name__ == '__main__':
 
     # Dataset Options
     dataset = create_dataset(opt)
-    dataset.set_tranform(transform=transforms.ToTensor())
+    #dataset.set_tranform(transform=transforms.ToTensor())
     opt.dataset_size = dataset.__len__()
 
     #  _______________________________________________________________________________________________
