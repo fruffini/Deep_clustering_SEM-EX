@@ -332,7 +332,6 @@ class Encoder(torch.nn.Module):
         :return: Tensor Batch, z_latent (H,1)
         """
         x = self.convolutional_layers(x)
-        print(x.shape)
         x = torch.flatten(x, start_dim=1)
         z_latent = self.embedded(x)  # Spazio latente autoencoder
         return z_latent
