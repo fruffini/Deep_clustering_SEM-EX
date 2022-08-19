@@ -218,7 +218,9 @@ class CLARODataset(BaseDataset):
     def __getitem__(self, index):
         """Generates one sample of data"""
         # Select sample
-        row = self.data.iloc[index].split('_')
+        row = self.data.iloc[index]
+        print(row)
+        row = row.split('_')
         img_id = row[1]
         patient_id = row[0]
         # load box
