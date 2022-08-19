@@ -129,7 +129,7 @@ if __name__ == '__main__':
     util_general.seed_all()
     print("Running path for the experiment:", os.getcwd())
     # Debugging Only.
-    sys.argv.extend(
+    """sys.argv.extend(
         [
             '--phase', 'train',
             '--AE_type', 'CAE3',
@@ -140,7 +140,8 @@ if __name__ == '__main__':
             '--data_dir', 'C:\\Users\\Ruffi\\Desktop\\Deep_clustering_SEM-EX\\data\\claro'
             ]
 
-    )    #  _______________________________________________________________________________________________
+    )"""
+    #  _______________________________________________________________________________________________
     #  _______________________________________________________________________________________________
     # Experiment Options
     OptionstTrain = TrainOptions()
