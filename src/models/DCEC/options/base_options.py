@@ -41,7 +41,6 @@ class BaseOptions(object):
         # Directories outside the src module
         parser.add_argument('--reports_dir', type=str, default='./reports', help='Customized report direcrtory folder, else it would be put like /src/reports ' )
         parser.add_argument('--config_dir', type=str, required=True, default="C:\\Users\\Ruffi\\Desktop\\Deep_clustering_SEM-EX\\configs", help='configs files folder IMPORTANT:')
-        parser.add_argument('--data_dir', type=str, default="./data", help='Data directory, ./data default.')
 
 
 

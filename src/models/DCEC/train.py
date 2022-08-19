@@ -129,16 +129,18 @@ if __name__ == '__main__':
     util_general.seed_all()
     print("Running path for the experiment:", os.getcwd())
     # Debugging Only.
-    """sys.argv.extend(
+    sys.argv.extend(
         [
             '--phase', 'train',
             '--AE_type', 'CAE3',
             '--dataset_name',
-            'MNIST',
+            'CLARO',
             '--reports_dir', 'C:\\Users\\Ruffi\\Desktop\\Deep_clustering_SEM-EX\\reports',
-            '--config_dir', 'C:\\Users\\Ruffi\\Desktop\\Deep_clustering_SEM-EX\\configs']
+            '--config_dir', 'C:\\Users\\Ruffi\\Desktop\\Deep_clustering_SEM-EX\\configs',
+            '--data_dir', 'C:\\Users\\Ruffi\\Desktop\\Deep_clustering_SEM-EX\\data\\claro'
+            ]
 
-    )"""
+    )
     #  _______________________________________________________________________________________________
     #  _______________________________________________________________________________________________
     # Experiment Options
@@ -177,7 +179,8 @@ if __name__ == '__main__':
     #           ITERATIVE TRAINING / PRETRAINING
     #  _______________________________________________________________________________________________
     #  _______________________________________________________________________________________________
-
+    for x, id_patient, id_slice in dataset.dataloader:
+        print(str().join([id_patient, id_slice]))
     dict_phase = {"train": 1, "pretrain": 0}
     if dict_phase[opt.phase]:
         iterative_training_over_k()

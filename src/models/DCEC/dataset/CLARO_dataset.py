@@ -1,3 +1,5 @@
+from util import util_path
+from dataset import BaseDataset
 from options.base_options import BaseOptions
 from util.util_general import *
 from easydict import EasyDict as edict
@@ -136,7 +138,7 @@ def loader(img_path, img_dim, box, clip, scale, convert_to_uint8, scale_by_255):
     img  = img.unsqueeze(0)
     return img
 
-class CLARODataset(torch.utils.data.Dataset):
+class CLARODataset(BaseDataset):
     """`'CoLlAborative multi-sources Radiopathomics
     approach for personalized Oncology in non-small cell lung cancer' (CLARO)
       <http://www.cosbi-lab.it/claro/>`_ Dataset.
@@ -155,34 +157,34 @@ class CLARODataset(torch.utils.data.Dataset):
     """
     def __init__(
             self,
-            data:               pd.Series,      # patients id list as <id_patient>_<id_slice>
             opt:                BaseOptions,    # stores all the experiments flags; subclass of BaseOptions
-            data_dir:           str,            # path to raw data
-            resolution:         int,            # desidered resolution
-            data_dir_box:       str,            # path to box file
-            box_value:          str,            # box opt
-            clip:               {},             # clip range
-            scale:              {},             # sale range
-            convert_to_uint8    :bool=False,    # uint8 options
-            scale_by_255        :bool=True      # scale from [0.0, 1.0] to [0.0 255.0]
-    ):
+            clip=                dict,                          # clip range
+            scale=               dict,                         # sale range
+            convert_to_uint8:    bool = False,    # uint8 options
+            scale_by_255:        bool = False,      # scale from [0.0, 1.0] to [0.0 255.0]
+            transform:           object = None):
         """Initialization"""
-        super().__init__(self, opt)
-        self.config = self.config = edict(load_config('CLARO_configuration.yaml', config_directory=self.opt.config_dir))
-        self.img_dir = os.path.join(data_dir)
-        self.data = data # estrai da file patients_info_CLARO_retrospettivo.xlsx
-        # Box
-        if data_dir_box is not None:
-            box_data = pd.read_excel(data_dir_box, index_col="img ID", dtype=list)
-            self.boxes = {os.path.basename(row[0]): eval(row[1][box_value]) for row in box_data.iterrows()}
+        BaseDataset.__init__(self, opt)
+        self.config = edict(load_config('CLARO_configuration.yaml', config_directory=self.opt.config_dir))
+        self.root_dir = self.opt.data_dir
+        self.interim_dir = os.path.join(self.root_dir, self.config['data']['interim_dir'])
+        self.transform = transform
+        # Upload info claro
+        self.info_claro = pd.read_excel(os.path.join(self.interim_dir, self.config['data']['data_info']))
+        # Upload raw_data.
+        self.data = pd.read_excel(os.path.join(self.interim_dir, self.config['data']['box_file']), index_col="img ID", dtype=list)  # Data Patient ID-slicesID
+        if self.opt.box_apply is True:
+            self.boxes = {os.path.basename(row[0]): eval(row[1][self.config['data']['box_value']]) for row in self.data.iterrows()}
         else:
             self.boxes = None
 
-        self.clip = clip
-        self.scale = scale
-        self.convert_to_uint8 = convert_to_uint8
+        # Box
+
+        self.clip = self.config['data']['clip']
+        self.scale = self.config['data']['scale']
+        self.convert_to_uint8 = self.config['data']['convert_to_uint8']
         self.scale_by_255 = scale_by_255
-        self.img_dim = resolution
+
     @staticmethod
     def modify_commandline_options(parser, is_train):
         """Add new dataset-specific options, and rewrite default values for existing options.
@@ -196,9 +198,19 @@ class CLARODataset(torch.utils.data.Dataset):
                 Returns:
                     the modified parser.
                 """
-        parser.add_argument('--mnist_mode', type=str, default='small', choices=['None', 'small', 'full'], help='Dataset loading options.')
-        parser.add_argument('--perc', type=float, default=0.1, help='Percentage of dataset')
+        parser.add_argument('--data_dir', type=str, default='C:\\Users\\Ruffi\\Desktop\\Deep_clustering_SEM-EX\\data\\claro', required=True, help='Input dataset directory, ./data default.')
+        parser.add_argument('--box_apply', action='store_false', help='if true, extract sub portion of the image, otherwise it does nothing')
         return parser
+
+    def set_transform(self, transform=None):
+        """ Adding transform function to dataset
+        Parameters:
+            transform (torchvision.transform): transform function
+            TODO insert the possibility to add multi transformation for data augmentation.
+        """
+        self.transform = transform
+
+
     def __len__(self):
         """Denotes the total number of samples"""
         return len(self.data)
@@ -209,16 +221,13 @@ class CLARODataset(torch.utils.data.Dataset):
         row = self.data.iloc[index].split('_')
         img_id = row[1]
         patient_id = row[0]
-
         # load box
-        if self.boxes:
-            box = self.boxes[patient_id + '_' + img_id]
-        else:
-            box = None
+        box = self.boxes[patient_id + '_' + img_id] if self.boxes else None
         # Load data and get label
         img_path = os.path.join(self.img_dir, patient_id, "images", f"{patient_id + '_' + img_id}.tif")
         x = loader(img_path=img_path, img_dim=self.img_dim, box=box, clip=self.clip, scale=self.scale, convert_to_uint8=self.convert_to_uint8, scale_by_255=self.scale_by_255)
-
+        if self.transform is not None:
+            x = self.transform(x)
         return x, patient_id, img_id
     def __repr__(self):
         fmt_str = 'Dataset ' + self.__class__.__name__ + '\n'

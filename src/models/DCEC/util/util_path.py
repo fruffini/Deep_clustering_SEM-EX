@@ -1,4 +1,5 @@
 """ Class to manage the Folders/Subfolders Paths for wxperiments"""
+import ntpath
 import os
 
 from easydict import EasyDict
@@ -197,3 +198,23 @@ def get_next_run_id_local(run_dir_root: str, module_name: str) -> int:
             run_id = max(run_id, i + 1)
 
     return run_id
+def get_filename_without_extension(path):
+    filename = get_filename(path)
+    return os.path.splitext(filename)[0]
+def get_filename(path):
+    head, tail = ntpath.split(path)
+    return tail or ntpath.basename(head)
+def split_dos_path_into_components(path):
+    folders = []
+    while 1:
+        path, folder = os.path.split(path)
+        if folder != "":
+            folders.append(folder)
+        else:
+            if path != "":
+                folders.append(path)
+
+            break
+
+    folders.reverse()
+    return folders
