@@ -153,9 +153,8 @@ if __name__ == '__main__':
     #  _______________________________________________________________________________________________
     # Submit run:
     print("Submit run")
-    run_module = os.path.basename(__file__)
     run_id = get_next_run_id_local(os.path.join('log_run', opt.dataset_name), opt.phase)  # GET run id
-    run_name = "{0:05d}--{1}--EXP_{2}".format(run_id, run_module, opt.id_exp)
+    run_name = "{0:05d}--{1}--EXP_{2}".format(run_id, opt.phase, opt.id_exp)
     log_dir = os.path.join('log_run', opt.dataset_name, run_name)
     util_general.mkdir(log_dir)
     #  _______________________________________________________________________________________________
