@@ -60,6 +60,8 @@ class DCECModel(BaseModel):
             gpu_ids=self.gpu_ids)
         self.netCL = init_net(net=Clustering_Layer(opt=opt), init_type=opt.init_type, init_gain=opt.init_gain,
             gpu_ids=self.gpu_ids)
+        # 0) Networks shapes input-output:
+        self.networks_shapes = {**self.netE.module.network_info, **self.netD.module.network_info}
 
         if self.isTrain:
             # Define Loss Functions
@@ -85,6 +87,8 @@ class DCECModel(BaseModel):
         2) creation of the model folders
         4) creation of the attribute self.save_dir for the model class reference
         """
+
+
         # 1) Settings of pretrain's paths
         self.set_pretrain_folders()
         if self.opt.phase == "train":

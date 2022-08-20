@@ -49,12 +49,12 @@ class BaseOptions(object):
              help='Layers setting file for CAE')
         parser.add_argument('--input_nc', type=int, default=1, help='# of input image channels: 3 for RGB and 1 for grayscale')
         parser.add_argument('--output_nc', type=int, default=1, help='# of output image channels: 3 for RGB and 1 for grayscale')
-        parser.add_argument('--embedded_dimension', type=int, default=10, help='Dimension of bottleneck latent space AE.')
+        parser.add_argument('--embedded_dimension', type=int, default=10, help='Dimension of bottleneck latent space CAE.')
         parser.add_argument('--alpha', type=float, default=1.0,
             help='Alpha coefficient for t-Student probability distribution.')
         parser.add_argument('--rec_type', type=str, default='bce', choices=['mse', 'bce', 'vanilla'], help='Type of '
                                                                                                          'reconstruction loss function.')
-        parser.add_argument('--AE_type', type=str, default='CAE2', choices=['CAE2', 'CAE3', 'CAE4'],
+        parser.add_argument('--AE_type', type=str, default='CAE2', choices=['CAE2', 'CAE3', 'CAE512'],
             help='type of architecture for the Autoencoder')
         parser.add_argument('--activations', type=str, default='sigmoid', choices=['sigmoid', 'tanh', 'none'],
             help='Activations for Autoencoder.')
