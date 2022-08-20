@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 #SBATCH -A SNIC2022-5-277  -p alvis
 #SBATCH -N 1 --gpus-per-node=A100:4
-#SBATCH -t 0-20:00:00
+#SBATCH -t 0-18:00:00
 # Output files
 #SBATCH --error=job_%J.err
 #SBATCH --output=out_%J.out
 # Mail me
 #SBATCH --mail-type=END,FAIL
-#SBATCH --mail-user=miriana.pastina@umu.se
+#SBATCH --mail-user=filruf1702@gmail.com
 
 # Load modules
 module load CUDA/11.3.1
