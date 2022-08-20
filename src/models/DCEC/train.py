@@ -124,6 +124,21 @@ def iterative_training_over_k():
 
 if __name__ == '__main__':
     #  _______________________________________________________________________________________________
+    # Experiment Options
+    OptionstTrain = TrainOptions()
+    opt = OptionstTrain.parse()
+    opt.img_shape = (512, 512) if opt.dataset_name == "CLARO" else (28, 28)
+    # Submit run:
+    print("Submit run")
+    run_id = get_next_run_id_local(os.path.join('log_run', opt.dataset_name), opt.phase)  # GET run id
+    run_name = "{0:05d}--{1}--EXP_{2}".format(run_id, opt.phase, opt.id_exp)
+    log_dir = os.path.join('log_run', opt.dataset_name, run_name)
+    util_general.mkdir(log_dir)
+    #  _______________________________________________________________________________________________
+    # Initialize Logger - run folder
+    OptionstTrain.print_options(opt=opt, path_log_run=log_dir)
+    logger = util_general.Logger(file_name=os.path.join(log_dir, 'log.txt'), file_mode="w", should_flush=True)
+
     # System Settings
     sys.path.extend(["./"])
 
@@ -154,22 +169,8 @@ if __name__ == '__main__':
 
 
 
-    # Experiment Options
-    OptionstTrain = TrainOptions()
-    opt = OptionstTrain.parse()
-    opt.img_shape = (512, 512) if opt.dataset_name == "CLARO" else (28 , 28)
 
     #  _______________________________________________________________________________________________
-    # Submit run:
-    print("Submit run")
-    run_id = get_next_run_id_local(os.path.join('log_run', opt.dataset_name), opt.phase)  # GET run id
-    run_name = "{0:05d}--{1}--EXP_{2}".format(run_id, opt.phase, opt.id_exp)
-    log_dir = os.path.join('log_run', opt.dataset_name, run_name)
-    util_general.mkdir(log_dir)
-    #  _______________________________________________________________________________________________
-    # Initialize Logger - run folder
-    OptionstTrain.print_options(opt=opt, path_log_run=log_dir)
-    logger = util_general.Logger(file_name=os.path.join(log_dir, 'log.txt'), file_mode="w", should_flush=True)
     #  _______________________________________________________________________________________________
     # Welcome
     from datetime import datetime
