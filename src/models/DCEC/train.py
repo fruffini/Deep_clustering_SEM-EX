@@ -129,7 +129,7 @@ if __name__ == '__main__':
     util_general.seed_all()
     print("Running path for the experiment:", os.getcwd())
     # Debugging Only.
-    sys.argv.extend(
+    """sys.argv.extend(
         [
             '--phase', 'pretrain',
             '--AE_type', 'CAE512',
@@ -140,7 +140,7 @@ if __name__ == '__main__':
             '--data_dir', 'C:\\Users\\Ruffi\\Desktop\\Deep_clustering_SEM-EX\\data'
             ]
 
-    )
+    )"""
     #  _______________________________________________________________________________________________
     #  _______________________________________________________________________________________________
     # Experiment Options
