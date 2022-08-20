@@ -5,6 +5,8 @@ from __future__ import print_function, division
 import sys
 import time
 import os
+
+import torch
 from tqdm import tqdm
 
 from util.util_path import get_next_run_id_local
@@ -143,6 +145,15 @@ if __name__ == '__main__':
     )"""
     #  _______________________________________________________________________________________________
     #  _______________________________________________________________________________________________
+    if torch.cuda.device_count() > 1:
+        print("Let's use", torch.cuda.device_count(), "GPUs!")
+    else:
+        print("Qualcosa non va nelle GPUs presenti per il Job!")
+
+
+
+
+
     # Experiment Options
     OptionstTrain = TrainOptions()
     opt = OptionstTrain.parse()
