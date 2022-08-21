@@ -2,7 +2,7 @@ import os
 
 import torch
 
-import util_general
+from util import util_general
 log_dir = '/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/configs'
 logger = util_general.Logger(file_name=os.path.join(log_dir, 'log.txt'), file_mode="w", should_flush=True)
 
