@@ -3,8 +3,8 @@ import os
 import torch
 
 from src.models.DCEC.util import util_general
-#log_dir = '/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/configs'
-log_dir = 'C:/Users/Ruffi/Desktop/Deep_clustering_SEM-EX'
+log_dir = '/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/configs'
+#log_dir = 'C:/Users/Ruffi/Desktop/Deep_clustering_SEM-EX'
 logger = util_general.Logger(file_name=os.path.join(log_dir, 'log_cuda_info.txt'), file_mode="w", should_flush=True)
 from datetime import datetime
 now = datetime.now()

@@ -25,7 +25,7 @@ module load Python/3.8.6-GCCcore-10.2.0
 cd /mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX
 
 # Train HERE YOU RUN YOUR PROGRAM
-python prova_bash.py
+python GPUs_cuda_debug.py
 
 # Deactivate venv
 deactivate
