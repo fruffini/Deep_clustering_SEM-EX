@@ -124,6 +124,12 @@ def iterative_training_over_k():
 
 if __name__ == '__main__':
     #  _______________________________________________________________________________________________
+    # Welcome
+    from datetime import datetime
+    now = datetime.now()
+    date_time = now.strftime("%d/%m/%Y, %H:%M:%S")
+    print("Hello!", date_time)
+
     # Experiment Options
     OptionstTrain = TrainOptions()
     opt = OptionstTrain.parse()
@@ -172,11 +178,7 @@ if __name__ == '__main__':
 
     #  _______________________________________________________________________________________________
     #  _______________________________________________________________________________________________
-    # Welcome
-    from datetime import datetime
-    now = datetime.now()
-    date_time = now.strftime("%d/%m/%Y, %H:%M:%S")
-    print("Hello!", date_time)
+
 
     # Dataset Options
     dataset = create_dataset(opt)
