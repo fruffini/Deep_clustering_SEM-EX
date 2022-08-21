@@ -134,21 +134,20 @@ if __name__ == '__main__':
     opt = OptionstTrain.parse()
     opt.img_shape = (512, 512) if opt.dataset_name == "CLARO" else (28, 28)
     #  _______________________________________________________________________________________________
-    # Initialize Logger - run folder
-    OptionstTrain.print_options(opt=opt, path_log_run=log_dir)
-    logger = util_general.Logger(file_name=os.path.join(log_dir, 'log.txt'), file_mode="w", should_flush=True)
-
-    # Welcome
-    from datetime import datetime
-    now = datetime.now()
-    date_time = now.strftime("%d/%m/%Y, %H:%M:%S")
-    print("Hello!", date_time)
     # Submit run:
     print("Submit run")
     run_id = get_next_run_id_local(os.path.join('log_run', opt.dataset_name), opt.phase)  # GET run id
     run_name = "{0:05d}--{1}--EXP_{2}".format(run_id, opt.phase, opt.id_exp)
     log_dir = os.path.join('log_run', opt.dataset_name, run_name)
     util_general.mkdir(log_dir)
+    # Initialize Logger - run folder
+    OptionstTrain.print_options(opt=opt, path_log_run=log_dir)
+    logger = util_general.Logger(file_name=os.path.join(log_dir, 'log.txt'), file_mode="w", should_flush=True)
+    # Welcome
+    from datetime import datetime
+    now = datetime.now()
+    date_time = now.strftime("%d/%m/%Y, %H:%M:%S")
+    print("Hello!", date_time)
     print("Running path for the experiment:", os.getcwd())
     # Info CUDA
     print("-------------------------INFO CUDA GPUs ----------------------------------")
