@@ -13,13 +13,13 @@
 module load CUDA/11.3.1
 module load Python/3.8.6-GCCcore-10.2.0
 
-# Load modules
-module load CUDA/11.3.1
-module load Python/3.8.6-GCCcore-10.2.0
-
 # Activate venv
 cd /mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/envs/venv
 source bin/activate
+
+# Load modules
+module load CUDA/11.3.1
+module load Python/3.8.6-GCCcore-10.2.0
 
 # Executes the code
 cd /mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX
