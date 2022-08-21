@@ -14,7 +14,7 @@ from options.train_options import TrainOptions
 from models import create_model
 from util import util_general
 from dataset import create_dataset
-from torchvision import transforms
+
 
 import numpy as np
 
@@ -124,11 +124,32 @@ def iterative_training_over_k():
 
 if __name__ == '__main__':
     #  _______________________________________________________________________________________________
+    # System Settings
+    sys.path.extend(["./"])
+    # Seed everything
+    util_general.seed_all()
+
+    # Experiment Options
+    OptionstTrain = TrainOptions()
+    opt = OptionstTrain.parse()
+    opt.img_shape = (512, 512) if opt.dataset_name == "CLARO" else (28, 28)
+    #  _______________________________________________________________________________________________
+    # Initialize Logger - run folder
+    OptionstTrain.print_options(opt=opt, path_log_run=log_dir)
+    logger = util_general.Logger(file_name=os.path.join(log_dir, 'log.txt'), file_mode="w", should_flush=True)
+
     # Welcome
     from datetime import datetime
     now = datetime.now()
     date_time = now.strftime("%d/%m/%Y, %H:%M:%S")
     print("Hello!", date_time)
+    # Submit run:
+    print("Submit run")
+    run_id = get_next_run_id_local(os.path.join('log_run', opt.dataset_name), opt.phase)  # GET run id
+    run_name = "{0:05d}--{1}--EXP_{2}".format(run_id, opt.phase, opt.id_exp)
+    log_dir = os.path.join('log_run', opt.dataset_name, run_name)
+    util_general.mkdir(log_dir)
+    print("Running path for the experiment:", os.getcwd())
     # Info CUDA
     print("-------------------------INFO CUDA GPUs ----------------------------------")
     print("Number of GPUs devices: ", torch.cuda.device_count())
@@ -137,62 +158,17 @@ if __name__ == '__main__':
         print("----DEVICE NUMBER : {%d} ----" % (device))
         print('__CUDA Device Name:', torch.cuda.get_device_name(device))
         print('__CUDA Device Total Memory [GB]:', torch.cuda.get_device_properties(device).total_memory / 1e9)
-
-    # Experiment Options
-    OptionstTrain = TrainOptions()
-    opt = OptionstTrain.parse()
-    opt.img_shape = (512, 512) if opt.dataset_name == "CLARO" else (28, 28)
-    # Submit run:
-    print("Submit run")
-    run_id = get_next_run_id_local(os.path.join('log_run', opt.dataset_name), opt.phase)  # GET run id
-    run_name = "{0:05d}--{1}--EXP_{2}".format(run_id, opt.phase, opt.id_exp)
-    log_dir = os.path.join('log_run', opt.dataset_name, run_name)
-    util_general.mkdir(log_dir)
-    #  _______________________________________________________________________________________________
-    # Initialize Logger - run folder
-    OptionstTrain.print_options(opt=opt, path_log_run=log_dir)
-    logger = util_general.Logger(file_name=os.path.join(log_dir, 'log.txt'), file_mode="w", should_flush=True)
-
-    # System Settings
-    sys.path.extend(["./"])
-
-    # Seed everything
-    util_general.seed_all()
-    print("Running path for the experiment:", os.getcwd())
-    # Debugging Only.
-    """sys.argv.extend(
-        [
-            '--phase', 'pretrain',
-            '--AE_type', 'CAE512',
-            '--dataset_name',
-            'CLARO',
-            '--reports_dir', 'C:\\Users\\Ruffi\\Desktop\\Deep_clustering_SEM-EX\\reports',
-            '--config_dir', 'C:\\Users\\Ruffi\\Desktop\\Deep_clustering_SEM-EX\\configs',
-            '--data_dir', 'C:\\Users\\Ruffi\\Desktop\\Deep_clustering_SEM-EX\\data'
-            ]
-
-    )"""
     #  _______________________________________________________________________________________________
     #  _______________________________________________________________________________________________
     if torch.cuda.device_count() > 1:
         print("Let's use", torch.cuda.device_count(), "GPUs!")
     else:
         print("Qualcosa non va nelle GPUs presenti per il Job!")
-
-
-
-
-
-
     #  _______________________________________________________________________________________________
     #  _______________________________________________________________________________________________
-
-
     # Dataset Options
     dataset = create_dataset(opt)
-    #dataset.set_tranform(transform=transforms.ToTensor())
     opt.dataset_size = dataset.__len__()
-
     #  _______________________________________________________________________________________________
     #  _______________________________________________________________________________________________
     #           ITERATIVE TRAINING / PRETRAINING

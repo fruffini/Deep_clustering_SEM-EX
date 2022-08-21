@@ -6,7 +6,7 @@ import os.path
 import errno
 import codecs
 from easydict import EasyDict as edict
-
+from torchvision import transforms
 class MNISTDataset(BaseDataset):
     """`MNIST <http://yann.lecun.com/exdb/mnist/>`_ Dataset.
 
@@ -40,6 +40,7 @@ class MNISTDataset(BaseDataset):
         self.root = os.path.expanduser(os.path.join(self.opt.data_dir,'MNIST' ))
         self.type = opt.mnist_mode
         self.transform = transform
+        self.set_tranform(transform=transforms.ToTensor())
         self.target_transform = target_transform
         self.train = opt.isTrain  # training set or test set
         self.full = False
