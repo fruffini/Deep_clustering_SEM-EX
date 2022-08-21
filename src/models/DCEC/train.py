@@ -129,6 +129,14 @@ if __name__ == '__main__':
     now = datetime.now()
     date_time = now.strftime("%d/%m/%Y, %H:%M:%S")
     print("Hello!", date_time)
+    # Info CUDA
+    print("-------------------------INFO CUDA GPUs ----------------------------------")
+    print("Number of GPUs devices: ", torch.cuda.device_count())
+    print('CUDNN VERSION:', torch.backends.cudnn.version())
+    for device in range(torch.cuda.device_count()):
+        print("----DEVICE NUMBER : {%d} ----" % (device))
+        print('__CUDA Device Name:', torch.cuda.get_device_name(device))
+        print('__CUDA Device Total Memory [GB]:', torch.cuda.get_device_properties(device).total_memory / 1e9)
 
     # Experiment Options
     OptionstTrain = TrainOptions()

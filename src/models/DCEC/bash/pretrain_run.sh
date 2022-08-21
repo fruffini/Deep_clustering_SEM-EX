@@ -9,22 +9,21 @@
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=filruf1702@gmail.com
 
-# Load modules
-module load CUDA/11.3.1
-module load Python/3.8.6-GCCcore-10.2.0
+
 
 # Activate venv
 cd /mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/envs/venv
 source bin/activate
 
+# Load modules
+module load CUDA/11.3.1
+module load Python/3.8.6-GCCcore-10.2.0
+
 # Executes the code
 cd /mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/src/models/DCEC
 
 # Train HERE YOU RUN YOUR PROGRAM
-export command="python train.py --phase pretrain --data_dir '/mimer/NOBACKUP/groups/snic2022-5-277/ltronchin/data' --config_dir '/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/configs' --reports_dir '/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/reports' --embedded_dimension=256 --dataset_name CLARO --AE_type CAE512 --n_epochs=50 --n_epochs_decay=50 --save_latest_freq=20000 --gpu_ids 0,1
-"
-echo "$command"
-srun $command
-wait
+python train.py --phase pretrain --data_dir '/mimer/NOBACKUP/groups/snic2022-5-277/ltronchin/data' --config_dir '/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/configs' --reports_dir '/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/reports' --embedded_dimension=256 --dataset_name CLARO --AE_type CAE512 --n_epochs=50 --n_epochs_decay=50 --save_latest_freq=20000 --gpu_ids '0,1,2,3'
+
 # Deactivate venv
 deactivate
