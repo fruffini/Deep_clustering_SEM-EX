@@ -16,8 +16,7 @@ cloudpickle==2.0.0
 colorama @ file:///tmp/build/80754af9/colorama_1607707115595/work
 cycler @ file:///tmp/build/80754af9/cycler_1637851556182/work
 decorator @ file:///tmp/build/80754af9/decorator_1632776554403/work
-dill==0.3.4
-dm-tree==0.1.6
+dill==0.3.4dm-tree==0.1.6
 idna==3.3
 imageio==2.11.0
 ipython @ file:///C:/ci/ipython_1635944283918/work

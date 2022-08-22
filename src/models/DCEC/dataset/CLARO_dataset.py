@@ -158,7 +158,7 @@ class CLARODataset(BaseDataset):
     def __init__(
             self,
             opt:                BaseOptions,    # stores all the experiments flags; subclass of BaseOptions
-            clip=                dict,                          # clip range
+            cip=                dict,                         # clip range
             scale=               dict,                         # sale range
             convert_to_uint8:    bool = False,    # uint8 options
             scale_by_255:        bool = False,      # scale from [0.0, 1.0] to [0.0 255.0]
@@ -203,7 +203,7 @@ class CLARODataset(BaseDataset):
                     the modified parser.
                 """
         parser.add_argument('--data_dir', type=str, default='C:\\Users\\Ruffi\\Desktop\\Deep_clustering_SEM-EX\\data\\claro', required=True, help='Input dataset directory, ./data default.')
-        parser.add_argument('--box_apply', action='store_false', help='if true, extract sub portion of the image, otherwise it does nothing')
+        parser.add_argument('--box_apply', action='store_true', help='if true, extract sub portion of the image, otherwise it does nothing')
         return parser
 
     def set_transform(self, transform=None):
