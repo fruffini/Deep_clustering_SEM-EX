@@ -216,7 +216,7 @@ class DCECModel(BaseModel):
         """
         tensor = input[0]
         self.x_batch = tensor.type(torch.FloatTensor).to(self.device) # copy
-        self.y_batch = input[1]# copy
+        self.y_batch = input[1]  # copy
 
     def encode(self):
         """Run encoding pass"""
