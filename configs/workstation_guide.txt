@@ -4,7 +4,11 @@
 ssh -X username@alvis1.c3se.chalmers.se (username+server) profilo del prof
 pw: U*********
 
+# Enter my project
+cd  /mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX
 
+# Enter bash directory
+cd  /mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/src/models/DCEC/bash
 
 # Enter DCEC model
 cd  /mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/src/models/DCEC
