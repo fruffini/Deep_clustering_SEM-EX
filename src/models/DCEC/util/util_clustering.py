@@ -33,7 +33,33 @@ Internal Validity Index Metrics ( NO-label-needed ) :
 import numpy as np
 import torch
 from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score, calinski_harabasz_score, davies_bouldin_score
 
+def metrics_unsupervised_CVI(Z_latent_samples, labels_clusters):
+    """
+    Functions to compute unsupervised internal validation metrics.
+    Parameters:
+        Z_latent_samples (torch.Tensor) : encoded samples in the embedded space of DCEC.
+        labels_clusters (torch.Tensor) : label associated for each sample that indicates in which cluster the sample belong to.
+    Returns
+    -------
+    dict of scores (dict):
+        key : type
+        'avg_Si_score' : float
+            Mean Silhouette Coefficient for all samples.
+        'Calinski-Harabasz score' : float
+            The resulting Calinski-Harabasz score.
+        'Davies-Douldin score' : float
+            The resulting Davies-Bouldin score.
+    ----------
+    """
+    # 1) Silhouette_Score:
+    Si_score = silhouette_score(Z_latent_samples, labels_clusters)
+    # 2) Calinski_Harabasz_score:
+    CH_score = calinski_harabasz_score(Z_latent_samples, labels_clusters)
+    # 3) davies_bouldin_score:
+    DB_score = davies_bouldin_score(Z_latent_samples, labels_clusters)
+    return {'avg_Si_score': Si_score, 'Calinski-Harabasz score': CH_score, 'Davies-Douldin score': DB_score}
 
 def kmeans(model, dataloader, opt):
     """

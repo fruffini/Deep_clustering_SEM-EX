@@ -83,7 +83,9 @@ def train():
                     model.save_image_reconstructed(epoch=epoch)
 
             model.print_current_losses(epoch=epoch, iters=epoch_iter)
+            model.print_metrics(epoch=epoch)
             model.reset_accumulator()
+            print ('Training time for 1 epoch : ', (time.time() - epoch_start_time)/60)
             if exit_:
                 break
             else:
@@ -129,6 +131,7 @@ if __name__ == '__main__':
     # Seed everything
     util_general.seed_all()
 
+    #  _______________________________________________________________________________________________
     # Experiment Options
     OptionstTrain = TrainOptions()
     opt = OptionstTrain.parse()
@@ -136,13 +139,20 @@ if __name__ == '__main__':
     #  _______________________________________________________________________________________________
     # Submit run:
     print("Submit run")
-    run_id = get_next_run_id_local(os.path.join('log_run', opt.dataset_name), opt.phase)  # GET run id
+    log_path = os.path.join(opt.reports_dir, 'log_run')
+    run_id = get_next_run_id_local(os.path.join(log_path, opt.dataset_name), opt.phase)  # GET run id
     run_name = "{0:05d}--{1}--EXP_{2}".format(run_id, opt.phase, opt.id_exp)
-    log_dir = os.path.join('log_run', opt.dataset_name, run_name)
-    util_general.mkdir(log_dir)
+    log_dir_exp = os.path.join(log_path, opt.dataset_name, run_name)
+    util_general.mkdir(log_dir_exp)
     # Initialize Logger - run folder
-    OptionstTrain.print_options(opt=opt, path_log_run=log_dir)
-    logger = util_general.Logger(file_name=os.path.join(log_dir, 'log.txt'), file_mode="w", should_flush=True)
+    OptionstTrain.print_options(opt=opt, path_log_run=log_dir_exp)
+    logger = util_general.Logger(file_name=os.path.join(log_dir_exp, 'log.txt'), file_mode="w", should_flush=True)
+
+    #  _______________________________________________________________________________________________
+    #  _______________________________________________________________________________________________
+    #                   DATA / MODEL / TRAIN
+    #  _______________________________________________________________________________________________
+    #  _______________________________________________________________________________________________
     # Welcome
     from datetime import datetime
     now = datetime.now()
@@ -158,16 +168,10 @@ if __name__ == '__main__':
         print('__CUDA Device Name:', torch.cuda.get_device_name(device))
         print('__CUDA Device Total Memory [GB]:', torch.cuda.get_device_properties(device).total_memory / 1e9)
     #  _______________________________________________________________________________________________
-    #  _______________________________________________________________________________________________
-    if torch.cuda.device_count() > 1:
-        print("Let's use", torch.cuda.device_count(), "GPUs!")
-    else:
-        print("Qualcosa non va nelle GPUs presenti per il Job!")
-    #  _______________________________________________________________________________________________
-    #  _______________________________________________________________________________________________
     # Dataset Options
     dataset = create_dataset(opt)
     opt.dataset_size = dataset.__len__()
+
     #  _______________________________________________________________________________________________
     #  _______________________________________________________________________________________________
     #           ITERATIVE TRAINING / PRETRAINING

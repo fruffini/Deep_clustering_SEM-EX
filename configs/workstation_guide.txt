@@ -1,0 +1,45 @@
+# Connect to Chalmers.se server- Alvis cluster
+
+# Launch in the terminal
+ssh -X username@alvis1.c3se.chalmers.se (username+server) profilo del prof
+pw: U*********
+
+
+
+# Enter DCEC model
+cd  /mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/src/models/DCEC
+cd  /src/models/DCEC
+
+# Activate the enviroment
+
+cd /mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/envs/venv
+source bin/activate
+
+
+# Run experiments here
+cd  /mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/src/models/DCEC
+
+
+MNIST
+# Debug from pycharm
+sys.argv.extend(
+        [
+            '--phase', 'train',
+            '--AE_type', 'CAE3',
+            '--dataset_name', 'MNIST',
+            '--reports_dir', 'C:\\Users\\Ruffi\\Desktop\\Deep_clustering_SEM-EX\\reports',
+            '--config_dir', 'C:\\Users\\Ruffi\\Desktop\\Deep_clustering_SEM-EX\\configs',
+        ]
+
+    )
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+CLARO
+# I dati non sono presenti nella directory:
+/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/data
+# I dati sia raw che interim devono essere caricati da 
+/mimer/NOBACKUP/groups/snic2022-5-277/ltronchin/data
+# Le specifiche delle sotto cartelle sono definite nel file presente nella cartella ./configs/CLARO_configuration.yaml
+
+
+Launch Pretrain
+sbatch /mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/src/models/DCEC/bash/pretrain_run.sh

@@ -37,10 +37,10 @@ class MNISTDataset(BaseDataset):
     def __init__(self, opt, transform=None, target_transform=None):
         BaseDataset.__init__(self, opt)
         self.config = edict(load_config('MNIST_configuration.yaml', self.opt.config_dir))
-        self.root = os.path.expanduser(os.path.join(self.opt.data_dir,'MNIST' ))
+        self.root = os.path.expanduser(os.path.join('./data','MNIST' ))
         self.type = opt.mnist_mode
         self.transform = transform
-        self.set_tranform(transform=transforms.ToTensor())
+        self.set_transform(transform=transforms.ToTensor())
         self.target_transform = target_transform
         self.train = opt.isTrain  # training set or test set
         self.full = False
@@ -81,6 +81,7 @@ class MNISTDataset(BaseDataset):
         parser.add_argument('--mnist_mode', type=str, default='small', choices=['None', 'small', 'full'], help='Dataset loading options.')
         parser.add_argument('--perc', type=float, default=0.1, help='Percentage of dataset')
         return parser
+
     def set_transform(self, transform=None):
         """ Adding transform function to dataset
         Parameters:

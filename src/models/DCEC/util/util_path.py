@@ -1,6 +1,7 @@
 """ Class to manage the Folders/Subfolders Paths for wxperiments"""
 import ntpath
 import os
+import shutil
 
 from easydict import EasyDict
 from util import util_general
@@ -108,8 +109,7 @@ class PathManager(object):
         """Clean directory from all files and all subdirs
             Parameters:
                   path (str): path string to delete."""
-        with os.scandir(path) as scan:
-            list(os.remove(pe) for pe in scan)
+        shutil.rmtree(path)
 
     def set_dir(self, dir_to_extend, path_ext, name_att="", force=False):
         """Set new attribute in <self.paths> by string and create a new folder.

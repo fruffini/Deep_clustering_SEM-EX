@@ -1,11 +1,17 @@
 import itertools
 from collections import OrderedDict
+
+from PIL import Image
 import torch
 from torchvision.utils import save_image
-from util.util_clustering import kmeans
+
+from util import util_general
+from util.util_clustering import kmeans, metrics_unsupervised_CVI
 from .base_model import BaseModel
 from .networks import *
+
 torch.autograd.set_detect_anomaly(True)
+
 
 class DCECModel(BaseModel):
     @staticmethod
@@ -47,6 +53,7 @@ class DCECModel(BaseModel):
         # specify training losses to print out.
         self.loss_names = ['TOTAL', 'KL', 'REC'] if opt.phase == 'train' else ['REC']
         self.set_log_losses()
+
         # specify the models you want to save to the disk. The training/test scripts will call
         # <BaseModel.save_networks> and <BaseModel.load_networks>.
         self.model_names = ['E', 'D', 'CL'] if opt.phase == 'train' else ['E', 'D']
@@ -78,7 +85,9 @@ class DCECModel(BaseModel):
 
             # Directory overwriting:
             self.opt.path_man.set_dir(dir_to_extend="plots_dir", path_ext="reconstructed", force=True)  #reconstructed folder
-
+            # metrics log
+            self.metrics_names = {'avg_Si_score', 'Calinski-Harabasz score', 'Davies-Bouldin score'}
+            self.set_metrics()
 
     def init_DCEC(self):
         """Init function for DCEC model:
@@ -108,11 +117,8 @@ class DCECModel(BaseModel):
             # 3) creation of the model string for reference in the path Manager.
             string_model_dir = str().join(["model", '_', 'dir'])
             self.opt.model_dir = string_model_dir
-
-
-
     def set_log_losses(self):
-        """create a logging file to store training losses"""
+        """create the accuracy losses and logging file to store training losses"""
 
         self.acc_losses = OrderedDict({name_losses: list() for name_losses in self.loss_names})
         self.log_losses = os.path.join(self.get_path_phase(name='logs_dir'), 'losses_{}_log_{}.txt'.format(self.opt.phase, self.name if self.opt.phase == "train" else self.opt.AE_type))
@@ -123,6 +129,19 @@ class DCECModel(BaseModel):
         with open(self.log_losses, "w") as log_file:
 
             log_file.write('================ Training Loss ================\n' )
+            log_file.write(first)
+    def set_metrics(self):
+        """create the accuracy losses and logging file to store training losses"""
+        self.metrics_names = {'avg_Si_score', 'Calinski-Harabasz score', 'Davies-Bouldin score'}
+        self.log_metrics = os.path.join(
+            self.get_path_phase(name='logs_dir'), 'metrics_CVI_during_training_log.txt'
+            )
+        first = 'epoch'
+        for k in self.metrics_names:
+            first += ',' + k
+        with open(self.log_metrics, "w") as log_file:
+
+            log_file.write('================ Metrics Report ================\n' )
             log_file.write(first)
 
     def accumulate_losses(self):
@@ -139,14 +158,39 @@ class DCECModel(BaseModel):
         """ Function to plot and save the original images versus reconstructed images.
             Parameters:
                 epoch (int): epoch of the representation"""
-        n = min(self.x_batch.size(0), 8)
-        comparison = torch.cat([self.x_batch[:n].to(self.device), self.x_hat[:n].to(self.device)])
-        path_reconstructed = self.opt.path_man.get_path(name='reconstructed_dir')
-        save_image(
-            tensor=comparison.data.cpu(),
-            fp=os.path.join(path_reconstructed, f"model_{self.__class__.__name__}_x_vs_x_hat_epoch_{epoch}.png")
-            )
 
+        n = min(self.x_batch.size(0), 8)
+        path_reconstructed = self.opt.path_man.get_path(name='reconstructed_dir')
+        path_epoch = os.path.join(path_reconstructed, 'reconstructed_images_epoch_{%d}') % (epoch)
+        util_general.mkdir(path=path_epoch)
+
+        for i in range(n):
+            image = torch.cat([self.x_batch[i].to(self.device), self.x_hat[i].to(self.device)], 1)
+            img = np.array(image.detach().cpu())
+            img = 255.0 * img
+            img = img.astype(np.uint8)
+            img = Image.fromarray(img[0,:,:])
+            img.save(
+            fp=os.path.join(path_epoch, f"model_{self.__class__.__name__}_rec_IMG_epoch_{epoch}_IDpatient_{int(self.y_batch[i].item())}.tif")
+            )
+    def print_metrics(self, epoch) :
+        """print current epoch metrics calculated on console and save them in the log direc
+
+               Parameters:
+                   epoch (int) -- current epoch
+               """
+        with torch.no_grad():
+            labels_clusters, Z_latent_samples = self.compute_labels(torch.Tensor(self.x_tot))  # Encoding samples in the embedded space
+            computed_metrics = metrics_unsupervised_CVI(Z_latent_samples=Z_latent_samples.detach().cpu(), labels_clusters=labels_clusters)
+
+        message = str(epoch)
+        for v in computed_metrics.values():
+            message += ','
+            message += '%.3f ' % (v)
+
+        print(message) if self.opt.verbose else self.do_nothing()  # print the message
+        with open(self.log_metrics, "a") as log_file:
+            log_file.write('\n%s' % message)  # save the message
     def print_current_losses(self, epoch, iters):
         """print current losses on console; also save the losses to the disk
 
@@ -160,7 +204,7 @@ class DCECModel(BaseModel):
             message += ','
             message += '%.3f ' % (np.sum(v)/(iters/self.opt.batch_size))
 
-        # print(message)  # print the message
+        print(message) if self.opt.verbose else self.do_nothing() # print the message
         with open(self.log_losses, "a") as log_file:
             log_file.write('\n%s' % message)  # save the message
 
@@ -171,7 +215,9 @@ class DCECModel(BaseModel):
 
         """
         tensor = input[0]
+        y = input[1]
         self.x_batch = tensor.type(torch.FloatTensor).to(self.device) # copy
+        self.y_batch = y.type(torch.FloatTensor).to(self.device) # copy
 
     def encode(self):
         """Run encoding pass"""
@@ -270,6 +316,13 @@ class DCECModel(BaseModel):
         """Compute qij_assignment on batch image x"""
         z_encoded = self.netE(x)
         return self.netCL(z_encoded)
+    def compute_labels(self, x):
+        """Compute the labels for each samples in batch image x"""
+
+        z_encoded = self.netE(x)
+        qij = self.netCL(z_encoded)
+        labels = qij.argmax(1).detach().cpu()
+        return labels, z_encoded
 
     def optimize_parameters(self):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
