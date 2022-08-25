@@ -336,11 +336,6 @@ class Encoder(torch.nn.Module):
         x = self.convolutional_layers(x)
         x = torch.flatten(x, start_dim=1)
         z_latent = self.embedded(x)  # Spazio latente autoencoder
-        print(
-            "\tIn Model: input size", x.size(),
-            "output size", z_latent.size(),
-            "device", z_latent.device
-        )
         return z_latent
 
 
@@ -467,11 +462,6 @@ class Decoder(nn.Module):
         # run through the decoder
         decoder_input = deembeddings.view(-1, self.arch.features_channels[-1], height, width)  # de_flattening
         x_hat = self.transpose_layers(decoder_input)
-        print(
-            "\tIn Model: input size", z.size(),
-            "output size", x_hat.size(),
-            "device", x_hat.device
-        )
         return x_hat
 
 
