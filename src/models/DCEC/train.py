@@ -128,16 +128,6 @@ if __name__ == '__main__':
     sys.path.extend(["./"])
     # Seed everything
     util_general.seed_all()
-    sys.argv.extend(
-        [
-            '--phase', 'train',
-            '--AE_type', 'CAE3',
-            '--dataset_name', 'MNIST',
-            '--reports_dir', 'C:\\Users\\Ruffi\\Desktop\\Deep_clustering_SEM-EX\\reports',
-            '--config_dir', 'C:\\Users\\Ruffi\\Desktop\\Deep_clustering_SEM-EX\\configs',
-        ]
-
-    )
     #  _______________________________________________________________________________________________
     # Experiment Options
     OptionstTrain = TrainOptions()
