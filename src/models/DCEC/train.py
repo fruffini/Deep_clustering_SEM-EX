@@ -85,7 +85,7 @@ def train():
             model.print_current_losses(epoch=epoch, iters=epoch_iter)
             model.print_metrics(epoch=epoch)
             model.reset_accumulator()
-            print ('Training time for 1 epoch : ', (time.time() - epoch_start_time)/60)
+            print ('Training time for 1 epoch : ', (time.time() - epoch_start_time)//60, ' ( min )')
             if exit_:
                 break
             else:

@@ -26,10 +26,7 @@ Internal Validity Index Metrics ( NO-label-needed ) :
         LINK:  https://livebook.manning.com/concept/r/davies-bouldin-index
 
 """
-
-
-
-
+import time
 import numpy as np
 import torch
 from sklearn.cluster import KMeans
@@ -85,8 +82,10 @@ def kmeans(model, dataloader, opt):
     # ----------------------------------
     # Fit k-means algorithm on concatenated samples and predict labels
     print("Kmeans fitting on course")
+    time_kmeans_0 = time.time()
     prediction = km.fit_predict(output_array)
-    print("Kmeans fitted on data")
+    time_kmeans_f = time.time()
+    print("Kmeans fitted on data \n Time needed for fitting", (time_kmeans_f-time_kmeans_0)//60, '( min. )')
     return x_out, km, prediction
 
 
