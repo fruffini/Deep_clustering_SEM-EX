@@ -339,7 +339,7 @@ class Encoder(torch.nn.Module):
         print(
             "\tIn Model: input size", x.size(),
             "output size", z_latent.size(),
-            "device", z.device
+            "device", z_latent.device
         )
         return z_latent
 
