@@ -107,17 +107,15 @@ def iterative_training_over_k():
         opt.num_clusters = k  # set the number of clusters.
         model = create_model(opt=opt)
         model.setup(opt=opt)
-
-        if opt.phase == "train":  # train phase
-            if model.load_model_pretrained():
-                train()
-                print(
-                    f"\n _______________________________________________________________________________________________ "
-                    f"\n INFORMATION: the DCEC model with the number of clusters equal to {k} has been trained.  "
-                    f"\n _______________________________________________________________________________________________"
-                    )
-            else:
-                raise NotImplementedError(" Pretrained weights not implemented, please launch experiment with --phase <pretrain>")
+        if model.load_model_pretrained():
+            train()  # train function.
+            print(
+                f"\n _______________________________________________________________________________________________ "
+                f"\n INFORMATION: the DCEC model with the number of clusters equal to {k} has been trained.  "
+                f"\n _______________________________________________________________________________________________"
+                )
+        else:
+            raise NotImplementedError(" Pretrained weights not implemented, please launch experiment with --phase <pretrain>")
 
         #  _______________________________________________________________________________________________
         #  _______________________________________________________________________________________________

@@ -237,7 +237,7 @@ class DCECModel(BaseModel):
 
         """
         with torch.no_grad():
-            q_ij = self.get_assignment(x=torch.Tensor(self.x_tot).to(self.device))  # probabilities computed for each samples to belong to each n_clusters.
+            q_ij = self.get_assignment(x=torch.Tensor(self.x_tot).to(torch.device('cuda:{}'.format(self.gpu_ids[-1]))))  # probabilities computed for each samples to belong to each n_clusters.
             self.target_prob = target_distribution(q_ij=q_ij)  # set target distribution
             y_pred = q_ij.argmax(1).detach().cpu()  # selecting labels
             y_pred_last = np.copy(self.y_prediction)
@@ -290,7 +290,11 @@ class DCECModel(BaseModel):
         # Passing the batch through the Clustering layer
         if self.opt.phase == "train":
             self.qij_assignment = self.netCL(self.z_encoded)
-
+        print(
+            "\tIn Model: input size", self.x_batch.size(),
+            "output size", self.x_hat.size(),
+            "device", self.x_batch.device
+            )
     def backward_DCEC(self):
         """Calculate the loss for DCEC in Train/Pretrain"""
         x_batch = self.x_batch.to(self.device) # Pass the images q_ij to device.
