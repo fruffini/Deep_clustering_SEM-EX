@@ -270,6 +270,7 @@ class DCECModel(BaseModel):
         x_out = None
         y_out = None
         z_latent_out = None
+        print('INFO: encoding all data on course...')
         with torch.no_grad():
             for data in dataloader:
                 self.set_input(data)
@@ -279,7 +280,8 @@ class DCECModel(BaseModel):
                 x_out = np.concatenate((x_out, data[0]), 0) if x_out is not None else data[0]
                 y_out = np.concatenate((y_out, data[1]), 0) if y_out is not None else data[1]
                 z_latent_out = np.concatenate((z_latent_out, z_latent_batch.cpu().detach().numpy()), 0) if z_latent_out is not None else z_latent_batch.cpu().detach().numpy()
-        return {'x_out': torch.from_numpy(x_out), 'id': torch.from_numpy(y_out), 'z_latent': torch.from_numpy(z_latent_out)}
+        print('INFO: encoding done!')
+        return {'x_out': torch.from_numpy(x_out), 'id': y_out, 'z_latent': torch.from_numpy(z_latent_out)}
 
     def prepare_training(self, dataloader):
         """Procedure to start the training of Deep Convolutional Embeddings Clustering model
