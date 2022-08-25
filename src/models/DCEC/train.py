@@ -61,12 +61,12 @@ def train():
                 tqdm_train.set_description(f"Epoch {epoch}")
                 # inner loop within one epoch
                 if batch_iters % opt.update_interval == 0:
-                    delta_bool = model.update_target()
+                    delta_bool = model.update_target(dataset.dataloader)
                     if total_iters > 0 and delta_bool:
                         print('\nReached tolerance threshold. Stopping training.\n', flush=False)
                         exit_ = True
                         break
-                # TODO print_freq, latest_freq sono utili ? Posso rimuovere ?
+
                 total_iters += opt.batch_size
                 epoch_iter += opt.batch_size
                 batch_iters += 1
@@ -85,7 +85,7 @@ def train():
             model.print_current_losses(epoch=epoch, iters=epoch_iter)
             model.print_metrics(epoch=epoch)
             model.reset_accumulator()
-            print ('Training time for 1 epoch : ', (time.time() - epoch_start_time)//60, ' ( min )')
+            print ('Training time for 1 epoch : ', (time.time() - epoch_start_time)/60, ' ( min )')
             if exit_:
                 break
             else:
@@ -128,7 +128,16 @@ if __name__ == '__main__':
     sys.path.extend(["./"])
     # Seed everything
     util_general.seed_all()
+    sys.argv.extend(
+        [
+            '--phase', 'train',
+            '--AE_type', 'CAE3',
+            '--dataset_name', 'MNIST',
+            '--reports_dir', 'C:\\Users\\Ruffi\\Desktop\\Deep_clustering_SEM-EX\\reports',
+            '--config_dir', 'C:\\Users\\Ruffi\\Desktop\\Deep_clustering_SEM-EX\\configs',
+        ]
 
+    )
     #  _______________________________________________________________________________________________
     # Experiment Options
     OptionstTrain = TrainOptions()

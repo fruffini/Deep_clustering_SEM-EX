@@ -58,6 +58,7 @@ def metrics_unsupervised_CVI(Z_latent_samples, labels_clusters):
     DB_score = davies_bouldin_score(Z_latent_samples, labels_clusters)
     return {'avg_Si_score': Si_score, 'Calinski-Harabasz score': CH_score, 'Davies-Douldin score': DB_score}
 
+
 def kmeans(model, dataloader, opt):
     """
     K-means algorithm trained on samples represented Autoencoder latent space.
@@ -80,12 +81,14 @@ def kmeans(model, dataloader, opt):
         x_out = np.concatenate((x_out, data[0]), 0) if x_out is not None else data[0]
         output_array = np.concatenate((output_array, z_latent_batch.cpu().detach().numpy()), 0) if output_array is not None else z_latent_batch.cpu().detach().numpy()
     # ----------------------------------
+
+
     # Fit k-means algorithm on concatenated samples and predict labels
     print("Kmeans fitting on course")
     time_kmeans_0 = time.time()
     prediction = km.fit_predict(output_array)
     time_kmeans_f = time.time()
-    print("Kmeans fitted on data \n Time needed for fitting", (time_kmeans_f-time_kmeans_0)//60, '( min. )')
+    print("Kmeans fitted on data \n Time needed for fitting", (time_kmeans_f-time_kmeans_0)/60, '( min. )')
     return x_out, km, prediction
 
 

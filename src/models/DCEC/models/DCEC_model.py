@@ -230,14 +230,16 @@ class DCECModel(BaseModel):
         self.target_prob_batch = self.target_prob[ind * self.opt.batch_size::] if (ind + 1) * self.opt.batch_size > self.opt.dataset_size else self.target_prob[ind * self.opt.batch_size:
                                                                                           (ind + 1) * self.opt.batch_size]
 
-    def update_target(self):
+    def update_target(self, dataloader):
         """Update target probability every # train iterations
         Returns:
             delta_label (float): is the label assignment difference between a fixed interval of training iterations. I's a float if the delta label parmeter is set not equal to zero, mean
 
         """
         with torch.no_grad():
-            q_ij = self.get_assignment(x=torch.Tensor(self.x_tot).to(torch.device('cuda:{}'.format(self.gpu_ids[-1]))))  # probabilities computed for each samples to belong to each n_clusters.
+            output = self.compute_encoded(dataloader=dataloader)
+            self.z_encoded = output['z_latent']
+            q_ij = self.netCL(self.z_encoded)  # probabilities computed for each samples to belong to each n_clusters.
             self.target_prob = target_distribution(q_ij=q_ij)  # set target distribution
             y_pred = q_ij.argmax(1).detach().cpu()  # selecting labels
             y_pred_last = np.copy(self.y_prediction)
@@ -264,10 +266,25 @@ class DCECModel(BaseModel):
         load_suffix = 'iter_%s' % (str(self.opt.load_iter)) if self.opt.load_iter >0 else 'latest'
         return self.load_networks(epoch=load_suffix, path_ext=self.get_path_phase("weights_dir", phase="pretrain"))
 
+    def compute_encoded(self, dataloader):
+        x_out = None
+        y_out = None
+        z_latent_out = None
+        with torch.no_grad():
+            for data in dataloader:
+                self.set_input(data)
+                z_latent_batch = self.encode()  # pass batch of samples to the Encoder
+                # ----------------------------------
+                # Concatenate z latent samples and x samples together
+                x_out = np.concatenate((x_out, data[0]), 0) if x_out is not None else data[0]
+                y_out = np.concatenate((y_out, data[1]), 0) if y_out is not None else data[1]
+                z_latent_out = np.concatenate((z_latent_out, z_latent_batch.cpu().detach().numpy()), 0) if z_latent_out is not None else z_latent_batch.cpu().detach().numpy()
+        return {'x_out': torch.from_numpy(x_out), 'id': torch.from_numpy(y_out), 'z_latent': torch.from_numpy(z_latent_out)}
+
     def prepare_training(self, dataloader):
         """Procedure to start the training of Deep Convolutional Embeddings Clustering model
         i) Initialize clusters centers with KMEANS clustering algorithm.
-        ii) extract clusters centers from fitted kmenas and put them in to <ClusteringLayer>.
+        ii) extract clusters centers from fitted kmeans and put them in to <ClusteringLayer>.
         """
         # i) Fitting clusters centers with k-means
         self.x_tot, self.kmeans, self.y_prediction = kmeans(model=self, dataloader=dataloader, opt=self.opt)
