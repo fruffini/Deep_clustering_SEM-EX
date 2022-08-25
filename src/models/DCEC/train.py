@@ -62,6 +62,7 @@ def train():
                 # inner loop within one epoch
                 if batch_iters % opt.update_interval == 0:
                     delta_bool = model.update_target(dataset.dataloader)
+                    model.print_metrics(epoch=epoch)
                     if total_iters > 0 and delta_bool:
                         print('\nReached tolerance threshold. Stopping training.\n', flush=False)
                         exit_ = True
@@ -83,7 +84,6 @@ def train():
                     model.save_image_reconstructed(epoch=epoch)
 
             model.print_current_losses(epoch=epoch, iters=epoch_iter)
-            model.print_metrics(epoch=epoch)
             model.reset_accumulator()
             print ('Training time for 1 epoch : ', (time.time() - epoch_start_time)/60, ' ( min )')
             if exit_:

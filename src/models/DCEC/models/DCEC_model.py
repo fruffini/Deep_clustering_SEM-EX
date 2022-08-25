@@ -180,8 +180,8 @@ class DCECModel(BaseModel):
                    epoch (int) -- current epoch
                """
         with torch.no_grad():
-            labels_clusters, Z_latent_samples = self.compute_labels(torch.Tensor(self.x_tot))  # Encoding samples in the embedded space
-            computed_metrics = metrics_unsupervised_CVI(Z_latent_samples=Z_latent_samples.detach().cpu(), labels_clusters=labels_clusters)
+            labels_clusters= self.compute_labels(torch.Tensor(self.z_encoded))  # Encoding samples in the embedded space
+            computed_metrics = metrics_unsupervised_CVI(Z_latent_samples=self.z_encoded.detach().cpu(), labels_clusters=labels_clusters)
 
         message = str(epoch)
         for v in computed_metrics.values():
@@ -309,11 +309,6 @@ class DCECModel(BaseModel):
         # Passing the batch through the Clustering layer
         if self.opt.phase == "train":
             self.qij_assignment = self.netCL(self.z_encoded)
-        print(
-            "\tIn Model: input size", self.x_batch.size(),
-            "output size", self.x_hat.size(),
-            "device", self.x_batch.device
-            )
     def backward_DCEC(self):
         """Calculate the loss for DCEC in Train/Pretrain"""
         x_batch = self.x_batch.to(self.device) # Pass the images q_ij to device.
@@ -338,14 +333,11 @@ class DCECModel(BaseModel):
         """Compute qij_assignment on batch image x"""
         z_encoded = self.netE(x)
         return self.netCL(z_encoded)
-    def compute_labels(self, x):
+    def compute_labels(self, z_encoded):
         """Compute the labels for each samples in batch image x"""
-
-        z_encoded = self.netE(x)
         qij = self.netCL(z_encoded)
         labels = qij.argmax(1).detach().cpu()
-        return labels, z_encoded
-
+        return labels
     def optimize_parameters(self):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
         phase = self.opt.phase

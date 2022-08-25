@@ -12,7 +12,6 @@ cd  /mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/src/models/DCEC/bash
 
 # Enter DCEC model
 cd  /mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/src/models/DCEC
-cd  /src/models/DCEC
 
 # Activate the enviroment
 
