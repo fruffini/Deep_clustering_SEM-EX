@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 #SBATCH -A SNIC2022-5-277  -p alvis
 #SBATCH -N 1 --gpus-per-node=V100:4
-#SBATCH -t 0-18:00:00
+#SBATCH -t 15-15:00:00
 # Output files
 #SBATCH --error=job_%J.err
 #SBATCH --output=out_%J.out
 # Mail me
 #SBATCH --mail-type=END,FAIL
-#SBATCH --mail-user=filruf1702@gmail.com
+#SBATCH --mail-user=ruffin02@outlook.it.com
 
 
 
