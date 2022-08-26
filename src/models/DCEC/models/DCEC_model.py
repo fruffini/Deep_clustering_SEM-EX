@@ -171,7 +171,7 @@ class DCECModel(BaseModel):
             img = img.astype(np.uint8)
             img = Image.fromarray(img[0,:,:])
             img.save(
-            fp=os.path.join(path_epoch, f"model_{self.__class__.__name__}_rec_IMG_epoch_{epoch}_IDpatient_{int(self.y_batch[i])}.tif")
+            fp=os.path.join(path_epoch, f"model_{self.__class__.__name__}_rec_IMG_epoch_{epoch}_IDpatient_{int(self.y_batch[i]) }_{i}.tif")
             )
     def print_metrics(self, epoch) :
         """print current epoch metrics calculated on console and save them in the log direc
@@ -249,6 +249,7 @@ class DCECModel(BaseModel):
                 # Check stop condition if the parameter is set in option.
                 delta_label = np.sum(np.array(y_pred.data) != y_pred_last).astype(np.float32) / \
                               y_pred.shape[0]
+
                 return delta_label < self.opt.delta_label
             else:
                 self.y_prediction = np.copy(y_pred)

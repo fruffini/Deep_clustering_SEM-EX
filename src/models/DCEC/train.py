@@ -40,7 +40,7 @@ def pretrain():
                     save_suffix = 'iter_%d' % total_iters if opt.save_by_iter else 'latest'
                     model.save_networks(save_suffix)
                     model.save_image_reconstructed(epoch=epoch)
-            model.print_current_losses(epoch=epoch, iters=epoch_iter)
+                    model.print_current_losses(epoch=epoch, iters=epoch_iter)
             model.reset_accumulator()
 
 
@@ -67,6 +67,9 @@ def train():
                         print('\nReached tolerance threshold. Stopping training.\n', flush=False)
                         exit_ = True
                         break
+                    else:
+                        print('\nTolerance on labels difference beetween %s iteration not respected. Continue Training...\n' %(opt.update_interval), flush=False)
+
 
                 total_iters += opt.batch_size
                 epoch_iter += opt.batch_size
@@ -87,7 +90,7 @@ def train():
             model.reset_accumulator()
             print ('Training time for 1 epoch : ', (time.time() - epoch_start_time)/60, ' ( min )')
             if exit_:
-                break
+                return
             else:
                 continue
 
