@@ -33,7 +33,7 @@ class DCECModel(BaseModel):
             parser.add_argument('--k_fin', type=int, default=10, help='Final number of centroids for the iterative training.')
             # DCECs Parameters
             parser.add_argument('--update_interval', default=500, type=float, help='update iterations interval to update target distribution.')
-            parser.add_argument('--gamma', default=0.1, type=float, help='clustering loss weight')
+            parser.add_argument('--gamma', default=0.5, type=float, help='clustering loss weight')
             parser.add_argument('--delta_label', default=0.001, type=float, help='delta label stop condition between every update iteration interval.')
             parser.add_argument('--delta_check', action='store_false', help='if true, checks the delta label condition, otherwise it continue training until the last epoch')
 
@@ -180,8 +180,8 @@ class DCECModel(BaseModel):
                    epoch (int) -- current epoch
                """
         with torch.no_grad():
-            labels_clusters= self.compute_labels(torch.Tensor(self.z_encoded))  # Encoding samples in the embedded space
-            computed_metrics = metrics_unsupervised_CVI(Z_latent_samples=self.z_encoded.detach().cpu(), labels_clusters=labels_clusters)
+            labels_clusters= self.compute_labels(torch.Tensor(self.z_encoded_tot))  # Encoding samples in the embedded space
+            computed_metrics = metrics_unsupervised_CVI(Z_latent_samples=self.z_encoded_tot.detach().cpu(), labels_clusters=labels_clusters)
 
         message = str(epoch)
         for v in computed_metrics.values():
@@ -238,8 +238,8 @@ class DCECModel(BaseModel):
         """
         with torch.no_grad():
             output = self.compute_encoded(dataloader=dataloader)
-            self.z_encoded = output['z_latent']
-            q_ij = self.netCL(self.z_encoded)  # probabilities computed for each samples to belong to each n_clusters.
+            self.z_encoded_tot = output['z_latent']
+            q_ij = self.netCL(self.z_encoded_tot)  # probabilities computed for each samples to belong to each n_clusters.
             self.target_prob = target_distribution(q_ij=q_ij)  # set target distribution
             y_pred = q_ij.argmax(1).detach().cpu()  # selecting labels
             y_pred_last = np.copy(self.y_prediction)
