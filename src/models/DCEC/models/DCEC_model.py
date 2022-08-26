@@ -179,18 +179,23 @@ class DCECModel(BaseModel):
                Parameters:
                    epoch (int) -- current epoch
                """
-        with torch.no_grad():
-            labels_clusters= self.compute_labels(torch.Tensor(self.z_encoded_tot))  # Encoding samples in the embedded space
-            computed_metrics = metrics_unsupervised_CVI(Z_latent_samples=self.z_encoded_tot.detach().cpu(), labels_clusters=labels_clusters)
+        if not np.unique(self.y_prediction) == 1:
+            print("Adding line to metrics result, epoch: ", epoch)
+            with torch.no_grad():
+                print("Labels assigned unique: ", np.unique(self.y_prediction))
 
-        message = str(epoch)
-        for v in computed_metrics.values():
-            message += ','
-            message += '%.3f ' % (v)
+                computed_metrics = metrics_unsupervised_CVI(Z_latent_samples=self.z_encoded_tot.detach().cpu(), labels_clusters=self.y_prediction)
 
-        print(message) if self.opt.verbose else self.do_nothing()  # print the message
-        with open(self.log_metrics, "a") as log_file:
-            log_file.write('\n%s' % message)  # save the message
+            message = str(epoch)
+            for v in computed_metrics.values():
+                message += ','
+                message += '%.3f ' % (v)
+
+            print(message) if self.opt.verbose else self.do_nothing()  # print the message
+            with open(self.log_metrics, "a") as log_file:
+                log_file.write('\n%s' % message)  # save the message
+        else:
+            print("Error only 1 label assigned to images")
     def print_current_losses(self, epoch, iters):
         """print current losses on console; also save the losses to the disk
 
@@ -249,7 +254,7 @@ class DCECModel(BaseModel):
                 # Check stop condition if the parameter is set in option.
                 delta_label = np.sum(np.array(y_pred.data) != y_pred_last).astype(np.float32) / \
                               y_pred.shape[0]
-
+                print("Delta label is : ", delta_label)
                 return delta_label < self.opt.delta_label
             else:
                 self.y_prediction = np.copy(y_pred)
