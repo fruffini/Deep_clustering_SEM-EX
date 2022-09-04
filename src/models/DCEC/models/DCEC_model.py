@@ -33,9 +33,9 @@ class DCECModel(BaseModel):
             parser.add_argument('--k_fin', type=int, default=10, help='Final number of centroids for the iterative training.')
             # DCECs Parameters
             parser.add_argument('--update_interval', default=500, type=float, help='update iterations interval to update target distribution.')
-            parser.add_argument('--gamma', default=0.08, type=float, help='clustering loss weight')
+            parser.add_argument('--gamma', default=0.04, type=float, help='clustering loss weight')
             parser.add_argument('--delta_label', default=0.0008, type=float, help='delta label stop condition between every update iteration interval.')
-            parser.add_argument('--delta_check', action='store_false', help='if true, checks the delta label condition, otherwise it continue training until the last epoch')
+            parser.add_argument('--delta_check', action='store_true', help='if true, checks the delta label condition, otherwise it continue training until the last epoch')
 
         return parser
 
@@ -254,7 +254,7 @@ class DCECModel(BaseModel):
                 # Check stop condition if the parameter is set in option.
                 delta_label = np.sum(np.array(y_pred.data) != y_pred_last).astype(np.float32) / \
                               y_pred.shape[0]
-                print("Delta label is : ", delta_label)
+                print("\n Delta label is : ", delta_label)
                 return delta_label < self.opt.delta_label
             else:
                 self.y_prediction = np.copy(y_pred)
