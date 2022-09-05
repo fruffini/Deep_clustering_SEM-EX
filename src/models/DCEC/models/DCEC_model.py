@@ -33,7 +33,7 @@ class DCECModel(BaseModel):
             parser.add_argument('--k_fin', type=int, default=10, help='Final number of centroids for the iterative training.')
             # DCECs Parameters
             parser.add_argument('--update_interval', default=500, type=float, help='update iterations interval to update target distribution.')
-            parser.add_argument('--gamma', default=0.04, type=float, help='clustering loss weight')
+            parser.add_argument('--gamma', default=0.3, type=float, help='clustering loss weight')
             parser.add_argument('--delta_label', default=0.0008, type=float, help='delta label stop condition between every update iteration interval.')
             parser.add_argument('--delta_check', action='store_true', help='if true, checks the delta label condition, otherwise it continue training until the last epoch')
 
