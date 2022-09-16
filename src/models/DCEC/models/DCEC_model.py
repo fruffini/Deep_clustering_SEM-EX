@@ -159,7 +159,7 @@ class DCECModel(BaseModel):
             Parameters:
                 epoch (int): epoch of the representation"""
 
-        n = min(self.x_batch.size(0), 8)
+        n = min(self.x_batch.size(0), 2)
         path_reconstructed = self.opt.path_man.get_path(name='reconstructed_dir')
         path_epoch = os.path.join(path_reconstructed, 'reconstructed_images_epoch_{%d}') % (epoch)
         util_general.mkdir(path=path_epoch)

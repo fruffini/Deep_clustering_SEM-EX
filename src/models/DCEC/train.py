@@ -82,7 +82,7 @@ def train():
 
                 if total_iters % opt.save_latest_freq == 0:  # cache our latest model every <save_latest_freq> iterations
                     print('saving the latest model (epoch %d, total_iters %d)' % (epoch, total_iters), )
-                    save_suffix = 'iter_%d' % total_iters if opt.save_by_iter else 'latest'
+                    save_suffix = 'iter_%d_epoch_%d' % (total_iters, epoch) if opt.save_by_iter else 'latest'
                     model.save_networks(save_suffix)
                     model.save_image_reconstructed(epoch=epoch)
 
@@ -93,6 +93,7 @@ def train():
                 return
             else:
                 continue
+    model.save_networks(save_suffix)
 
 
 def iterative_training_over_k():
