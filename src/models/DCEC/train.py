@@ -63,7 +63,7 @@ def train():
                 if batch_iters % opt.update_interval == 0:
                     delta_bool = model.update_target(dataset.dataloader)
                     model.print_metrics(epoch=epoch)
-                    if total_iters > 0 and delta_bool and not np.unique(model.y_prediction).__len__() <= 1 and epoch > (opt.n_epochs + opt.n_epochs_decay)//2:
+                    if total_iters > 0 and delta_bool and not np.unique(model.y_prediction).__len__() <= 1 and epoch > 500:
                         print('\nReached tolerance threshold. Stopping training.\n', flush=False)
                         exit_ = True
                         break
