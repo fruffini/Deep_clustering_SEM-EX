@@ -69,8 +69,6 @@ def train():
                         break
                     else:
                         print('\nTolerance on labels difference beetween %s iteration not respected. Continue Training...\n' %(opt.update_interval), flush=False)
-
-
                 total_iters += opt.batch_size
                 epoch_iter += opt.batch_size
                 batch_iters += 1
@@ -79,13 +77,11 @@ def train():
                 model.optimize_parameters()
                 # Accumulate all losses value
                 model.accumulate_losses()  # accumulate losses in a dictionary
-
                 if total_iters % opt.save_latest_freq == 0:  # cache our latest model every <save_latest_freq> iterations
                     print('saving the latest model (epoch %d, total_iters %d)' % (epoch, total_iters), )
                     save_suffix = 'iter_%d_epoch_%d' % (total_iters, epoch) if opt.save_by_iter else 'latest'
                     model.save_networks(save_suffix)
                     model.save_image_reconstructed(epoch=epoch)
-
             model.print_current_losses(epoch=epoch, iters=epoch_iter)
             model.reset_accumulator()
             print ('Training time for 1 epoch : ', (time.time() - epoch_start_time)/60, ' ( min )')
