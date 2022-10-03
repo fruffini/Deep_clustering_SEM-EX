@@ -31,7 +31,7 @@ sbatch pretrain_run.sh
 # Train-iterative
 sbatch training_iterative_run-bs64-lr0.002.sh
 sbatch training_iterative_run-bs128-lr0.002.sh
-sbatch training_iterative_run-bs128-lr0.002_only17.sh
+sbatch training_iterative_run-bs128-lr0.002_only11-12-13-14.sh
 
 # ----------------- Some information for debugging
 MNIST
