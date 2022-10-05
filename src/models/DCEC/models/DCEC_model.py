@@ -332,9 +332,9 @@ class DCECModel(BaseModel):
     def compute_metrics(self):
         pass
 
-    def set_p_target(self, x):
+    def set_p_target(self, z):
         """Set distribution p for KL divergence loss"""
-        self.p_target = self.get_assignment(x)
+        self.p_target = self.get_assignment(z)
 
     def get_assignment(self, x):
         """Compute qij_assignment on batch image x"""
