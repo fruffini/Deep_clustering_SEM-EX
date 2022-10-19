@@ -100,7 +100,7 @@ def plt_Var_Gini_K(file, save_dir):
     # _________________________________________________________________________________________________________________
     # Plot GINI
 
-    Gini, Delta_Gini, Delta_Gini_Sum = utils_clustering.calc_Delta_metrics(matrix_gini, N01=False)
+    Gini, Delta_Gini, Delta_Gini_Sum = util_clustering.calc_Delta_metrics(matrix_gini, N01=False)
 
     file_name = f"Gini_mean_t_over_k",
     data_plot = Gini.copy()
