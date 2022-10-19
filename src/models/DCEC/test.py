@@ -63,8 +63,6 @@ def iterative_evaluation_test():
     logwriter_variances_gini_end.writeheader()
     dataloader = dataset.dataloader
 
-    opt.k_0 = 4
-    opt.k_fin = 5
     for k in np.arange(opt.k_0, opt.k_fin + 1):  # outer loop for different model instanced with different cluster number intialization MODEL_k -> MODEL_k+1
         #  _______________________________________________________________________________________________
         print(f"\n _______________________________________________________________________________________________ "
