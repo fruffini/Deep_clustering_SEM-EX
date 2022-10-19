@@ -5,9 +5,12 @@ import csv
 import numpy as np
 import torch
 
-from util import util_clustering, util_data, util_general, util_plots
+from util import util_clustering
+from util import util_data
+from util import util_general
+from util import util_plots
 from options.test_options import TestOptions
-from util_path import get_next_run_id_local
+from util import util_path
 from dataset import create_dataset
 from models import create_model
 
@@ -181,7 +184,7 @@ if __name__ == '__main__':
     # Submit run:
     print("Submit run")
     log_path = os.path.join(opt.reports_dir, 'log_run')
-    run_id = get_next_run_id_local(os.path.join(log_path, opt.dataset_name), opt.phase)  # GET run id
+    run_id = util_path.get_next_run_id_local(os.path.join(log_path, opt.dataset_name), opt.phase)  # GET run id
     run_name = "{0:05d}--{1}--EXP_{2}".format(run_id, opt.phase, opt.id_exp)
     log_dir_exp = os.path.join(log_path, opt.dataset_name, run_name)
     util_general.mkdir(log_dir_exp)

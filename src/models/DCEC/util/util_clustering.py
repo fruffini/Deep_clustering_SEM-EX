@@ -1,3 +1,11 @@
+import time
+import numpy as np
+import torch
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score, calinski_harabasz_score, davies_bouldin_score
+from sklearn.metrics.cluster import normalized_mutual_info_score as NMI
+
+
 """Unsupervised Metrics script
 
 This script provides the main functions needed to evaluate the behavior of the model during training or post training.
@@ -26,12 +34,7 @@ Internal Validity Index Metrics ( NO-label-needed ) :
         LINK:  https://livebook.manning.com/concept/r/davies-bouldin-index
 
 """
-import time
-import numpy as np
-import torch
-from sklearn.cluster import KMeans
-from sklearn.metrics import silhouette_score, calinski_harabasz_score, davies_bouldin_score
-from sklearn.metrics.cluster import normalized_mutual_info_score as NMI
+
 
 def metrics_unsupervised_CVI(Z_latent_samples, labels_clusters):
     """
