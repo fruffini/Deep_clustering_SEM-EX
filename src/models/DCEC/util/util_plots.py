@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import os
-from util import util_clustering
+import util_clustering
 
 def plt_probabilities_NMI(file, save_dir):
     data = pd.read_csv(file)
