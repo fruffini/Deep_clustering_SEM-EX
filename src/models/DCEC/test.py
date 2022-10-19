@@ -174,8 +174,6 @@ if __name__ == '__main__':
     ])"""
     Option = TestOptions() # test options
     opt =Option.parse()
-    # hard-code some parameters for test
-    opt.num_threads = 0  # test code only supports num_threads = 0
     # Experiment Options
 
     opt.img_shape = (512, 512) if opt.dataset_name == "CLARO" else (28, 28)
