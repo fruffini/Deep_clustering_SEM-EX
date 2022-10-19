@@ -5,10 +5,7 @@ import csv
 import numpy as np
 import torch
 
-import util_clustering
-import util_data
-import util_general
-import util_plots
+from util import util_clustering, util_data, util_general, util_plots
 from options.test_options import TestOptions
 from util_path import get_next_run_id_local
 from dataset import create_dataset
