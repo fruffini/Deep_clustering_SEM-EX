@@ -6,6 +6,7 @@ import numpy as np
 import torch
 
 import util_clustering
+import util_data
 import util_general
 import util_plots
 from options.test_options import TestOptions
@@ -61,11 +62,7 @@ def iterative_evaluation_test():
     logwriter_metrics_unsup_end.writeheader()
     logwriter_probabilities_end.writeheader()
     logwriter_variances_gini_end.writeheader()
-
-
     dataloader = dataset.dataloader
-
-
 
     opt.k_0 = 4
     opt.k_fin = 5
@@ -93,6 +90,7 @@ def iterative_evaluation_test():
             ids_tot = dict_out['id']
             z_latent = dict_out['z_latent']
             labels, q_ = model.get_predictions_probabilities(z_latent=z_latent)
+            id_unique_dict, inverse_id_dict = util_data.find_unique_id_dictionary(ids_=ids_tot)
 
             soft_label_mean_assegnation_score, avarage_P_prototypes, Mutual_information_score, indices_th, \
             P_for_cluster \
@@ -100,11 +98,11 @@ def iterative_evaluation_test():
                 labels=labels,
                 ids=ids_tot,
                 probability=q_,
-                id_dict=Data_tools_total.id_unique_dict
+                id_dict=id_unique_dict
             )
             # Funzione di calcolo della varianza e della distribuzione delle slices dei pazienti nei clusters:
             Var_SF, Var_SF_W, list_Number_of_element, = util_clustering.TF_Variances_ECF(
-                z_=z_tot,
+                z_=z_latent,
                 labels=labels,
                 ids=ids_tot
                 )

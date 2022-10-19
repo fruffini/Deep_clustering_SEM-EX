@@ -131,7 +131,7 @@ def gini(array):
 
 
 
-def compute_probabilities_variables(labels, probability, ids, id_dict):
+def compute_probabilities_variables(labels, probability, ids, id_dict, threshold=90):
     # Cerco le strnghe associate ad ogni paziente:
     patients = np.unique(ids)
     weights_k = np.bincount(labels)
@@ -141,7 +141,7 @@ def compute_probabilities_variables(labels, probability, ids, id_dict):
     # Prendo le probilità di assegnazione delle labels, e ne calcolo il valore massimo:
     saved = probability.max(1)
     # Inserisco un threshold di confidenza.
-    th = 0.9
+    th = threshold
     # Prendo i valori massimi di probabilità, e ne calcolo il valore medio:
     max_values = [el.item() for el in saved[0].detach()]
     mean_max_probabilities = np.mean(max_values)
