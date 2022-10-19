@@ -151,16 +151,16 @@ def iterative_evaluation_test():
         #  _______________________________________________________________________________________________
         # _____________________________________________________________________________________________________________________
         # END ITER K:
-        logfile_variances_Gini_csv.close(), logfile_probabilities_csv.close(), logfile_metrics_end.close(),
+    logfile_variances_Gini_csv.close(), logfile_probabilities_csv.close(), logfile_metrics_end.close(),
 
-        util_plots.plt_Var_Gini_K(
+    util_plots.plt_Var_Gini_K(
             file=Var_gini_file_path,
             save_dir=plots_dir
-        )
-        util_plots.plt_probabilities_NMI(
+    )
+    util_plots.plt_probabilities_NMI(
             file=probabilities_file_path,
             save_dir=plots_dir
-        )
+    )
 
 
 if __name__ == '__main__':
