@@ -26,11 +26,11 @@ class DCECModel(BaseModel):
                 the modified parser.
             """
         parser.add_argument('--num_clusters', type=int, default=10, help='Num of clusters in which separate samples.')
-
+        # Iterative learning
+        parser.add_argument('--k_0', type=int, default=4, help='Starting number of centroids for the iterative training.')
+        parser.add_argument('--k_fin', type=int, default=10, help='Final number of centroids for the iterative training.')
         if is_train:
-            # Iterative learning
-            parser.add_argument('--k_0', type=int, default=4, help='Starting number of centroids for the iterative training.')
-            parser.add_argument('--k_fin', type=int, default=10, help='Final number of centroids for the iterative training.')
+
             # DCECs Parameters
             parser.add_argument('--update_interval', default=500, type=float, help='update iterations interval to update target distribution.')
             parser.add_argument('--gamma', default=0.3, type=float, help='clustering loss weight')
@@ -52,12 +52,16 @@ class DCECModel(BaseModel):
 
         self.init_DCEC()
         # specify training losses to print out.
-        self.loss_names = ['TOTAL', 'KL', 'REC'] if opt.phase == 'train' else ['REC']
-        self.set_log_losses()
+        if opt.phase != 'test':
+            self.loss_names = ['TOTAL', 'KL', 'REC'] if opt.phase == 'train' else ['REC']
+            self.set_log_losses()
 
-        # specify the models you want to save to the disk. The training/test scripts will call
-        # <BaseModel.save_networks> and <BaseModel.load_networks>.
-        self.model_names = ['E', 'D', 'CL'] if opt.phase == 'train' else ['E', 'D']
+            # specify the models you want to save to the disk. The training/test scripts will call
+            # <BaseModel.save_networks> and <BaseModel.load_networks>.
+            self.model_names = ['E', 'D', 'CL'] if opt.phase == 'train' else ['E', 'D']
+        else:
+            self.model_names = ['E', 'D', 'CL']
+
 
         # Define the networks for DCEC and initialize them ( both netE-netD for the representation module)
         # and Clustering layer module.
@@ -89,6 +93,17 @@ class DCECModel(BaseModel):
             # metrics log
             self.metrics_names = {'avg_Si_score', 'Calinski-Harabasz score', 'Davies-Bouldin score'}
             self.set_metrics()
+        else:
+            # Test Task
+            self.test_initialization()
+
+    def test_initialization(self):
+        """ Settings of the model's modules for the evaluation task """
+        for name in self.model_names:
+            net = getattr(self, 'net' + name)
+            if isinstance(net, torch.nn.DataParallel):
+                net = net.module
+                net.eval()
 
     def init_DCEC(self):
         """Init function for DCEC model:
@@ -97,11 +112,9 @@ class DCECModel(BaseModel):
         2) creation of the model folders
         4) creation of the attribute self.save_dir for the model class reference
         """
-
-
-        # 1) Settings of pretrain's paths
-        self.set_pretrain_folders()
         if self.opt.phase == "train":
+            # 1) Settings of pretrain's paths
+            self.set_pretrain_folders()
             # 2) creation of the model name: "DCECModel_#clusters" if the phase is "train", "CAE_type" if the phase is "pretrain"
             self.name = self.__class__.__name__
             self.name = str().join([self.name, '_', str(self.opt.num_clusters)])
@@ -113,11 +126,27 @@ class DCECModel(BaseModel):
             self.opt.path_man.initialize_model(model=self.name)
             self.save_dir = self.get_path_phase(name=string_model_dir)
         elif self.opt.phase == "pretrain":
+            # 1) Settings of pretrain's paths
+            self.set_pretrain_folders()
             # 2) creation of the model name: "DCECModel_#clusters" if the phase is "train", "CAE_type" if the phase is "pretrain"
             self.name = self.opt.AE_type
             # 3) creation of the model string for reference in the path Manager.
             string_model_dir = str().join(["model", '_', 'dir'])
             self.opt.model_dir = string_model_dir
+        elif self.opt.phase == "test":
+            # 2) creation of the model name: "DCECModel_#clusters" if the phase is "test"
+            self.name = self.__class__.__name__
+            self.name = str().join([self.name, '_', str(self.opt.num_clusters)])
+            # 3) creation of the model string for reference in the path Manager and later the model path/folder.
+            string_model_dir = str().join([self.name, '_', 'dir'])
+            self.opt.model_dir = string_model_dir
+            # 4) creation of the model path/folder and subfolders for logs/weights/plots for the testing and training phase.
+            self.save_dir = self.get_path_phase(name='save_dir')
+            self.opt.path_man.set_phase("train")
+            self.opt.path_man.auto_enumerate()
+            self.opt.path_man.initialize_model(model=self.name)
+            self.load_dir = self.get_path_phase(name=string_model_dir)
+            self.opt.path_man.set_phase("test")
     def set_log_losses(self):
         """create the accuracy losses and logging file to store training losses"""
 
@@ -236,6 +265,16 @@ class DCECModel(BaseModel):
         self.target_prob_batch = self.target_prob[ind * self.opt.batch_size::] if (ind + 1) * self.opt.batch_size > self.opt.dataset_size else self.target_prob[ind * self.opt.batch_size:
                                                                                           (ind + 1) * self.opt.batch_size]
 
+    def get_predictions_probabilities(self, z_latent):
+        with torch.no_grad():
+
+            q_ij = self.netCL(z_latent)
+            labels_y = q_ij.argmax(1).detach().cpu()  # selecting labels
+            return [labels_y, q_ij.detach().cpu()]
+
+
+
+
     def update_target(self, dataloader):
         """Update target probability every # train iterations
         Returns:
@@ -272,6 +311,11 @@ class DCECModel(BaseModel):
         """Ths function guarantees to load the weights pretrained for Encoder and Decoder"""
         load_suffix = 'iter_%s' % (str(self.opt.load_iter)) if self.opt.load_iter >0 else 'latest'
         return self.load_networks(epoch=load_suffix, path_ext=self.get_path_phase("weights_dir", phase="pretrain"))
+
+    def load_model_trained(self):
+        """Ths function guarantees to load the weights trained for Encoder, Decoder and Clustering layer."""
+        load_suffix = 'iter_%s' % (str(self.opt.load_iter)) if self.opt.load_iter >0 else 'latest'
+        return self.load_networks(epoch=load_suffix, path_ext=self.get_path_phase("weights_dir", phase="train"))
 
     def compute_encoded(self, dataloader):
         x_out = None

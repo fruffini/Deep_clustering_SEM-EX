@@ -31,6 +31,7 @@ import numpy as np
 import torch
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score, calinski_harabasz_score, davies_bouldin_score
+from sklearn.metrics.cluster import normalized_mutual_info_score as NMI
 
 def metrics_unsupervised_CVI(Z_latent_samples, labels_clusters):
     """
@@ -92,6 +93,146 @@ def kmeans(model, dataloader, opt):
     return x_out, km, prediction
 
 
+def weighted_var_and_var(values: object, weights: object) -> object:
+    """
+    Return the weighted average and traditional variance of values.
+
+
+    values, weights -- Numpy ndarrays with the same shape.
+    """
+    mean = np.mean(values)
+    # Fast and numerically precise:
+    variance_w = np.average((values - mean) ** 2, weights=weights)
+    variance = np.var(values)
+    return variance, variance_w
+
+
+def gini(array):
+    """Calculate the Gini coefficient of a numpy array."""
+    # based on bottom eq:
+    # http://www.statsdirect.com/help/generatedimages/equations/equation154.svg
+    # from:
+    # http://www.statsdirect.com/help/default.htm#nonparametric_methods/gini.htm
+    # All values are treated equally, arrays must be 1d:
+    array = array.flatten()
+    if np.amin(array) < 0:
+        # Values cannot be negative:
+        array -= np.amin(array)
+    # Values cannot be 0:
+    array += 0.00001
+    # Values must be sorted:
+    array = np.sort(array)
+    # Index per array element:
+    index = np.arange(1, array.shape[0] + 1)
+    # Number of array elements:
+    n = array.shape[0]
+    # Gini coefficient:
+    return ((np.sum((2 * index - n - 1) * array)) / (n * np.sum(array)))
+
+
+
+def compute_probabilities_variables(labels, probability, ids, id_dict):
+    # Cerco le strnghe associate ad ogni paziente:
+    patients = np.unique(ids)
+    weights_k = np.bincount(labels)
+    weights_k = weights_k[weights_k != 0]
+    # Salvo il numero reale labels assegnate = numero di K effettivo.
+    real_K = np.unique(labels)
+    # Prendo le probilità di assegnazione delle labels, e ne calcolo il valore massimo:
+    saved = probability.max(1)
+    # Inserisco un threshold di confidenza.
+    th = 0.9
+    # Prendo i valori massimi di probabilità, e ne calcolo il valore medio:
+    max_values = [el.item() for el in saved[0].detach()]
+    mean_max_probabilities = np.mean(max_values)
+    # Seleziono sia le lebal che gli indici rispetto al threshold.
+    indices_th = [max_ > th for max_ in max_values]
+    labels_th = labels[indices_th]
+    ids_th = ids[indices_th]
+
+    mean_max = mean_max_probabilities
+    prototypes_for_cluster = list()
+    for label in real_K:
+        index_for_label_th = [l == label for l in labels_th]
+        ids_cluster_th = ids_th[index_for_label_th]
+        number_of_prototypes = np.unique(ids_cluster_th).size
+        prototypes_for_cluster.append(number_of_prototypes)
+    mean_n_prototypes = np.average(prototypes_for_cluster, weights=weights_k)
+
+    # Normalized Mutual information Score
+    id_int_array = np.array([id_dict[id] for id in ids])
+    Mutual_information_criterion = NMI(labels_true=id_int_array, labels_pred=labels)
+    return mean_max, mean_n_prototypes, Mutual_information_criterion, indices_th, prototypes_for_cluster
+
+
+
+
+def compute_GINI(list_distribution):
+    gini_index_for_t = [gini(element[np.nonzero(element)].astype(np.float64)) for element in np.array(
+        list_distribution)]
+    cumulative_gini = np.sum(gini_index_for_t)
+    return gini_index_for_t, cumulative_gini
+
+
+
+def calc_Delta_metrics(matrix, N01=False):
+    matrix = np.array(
+        [list((matrix[:, i] - np.min(matrix[:, i])) / (np.max(matrix[:, i]) - np.min(matrix[:, i]))) for
+         i in range(matrix.shape[1])]).transpose() if N01 else matrix.copy()
+    D_matrix = np.array(
+        [list((matrix[i + 1, :]) - (matrix[i, :])) for i in range(matrix.shape[0] - 1)])
+    D_sum_matrix = D_matrix.sum(1)
+    return matrix, D_matrix, D_sum_matrix
+
+
+
+def TF_Variances_ECF(z_, labels, ids):
+    patients = np.unique(ids)
+    N_patients = len(patients)
+    count_by_cluster = np.bincount(labels)
+    K = len(count_by_cluster)
+    index_clusters = np.arange(0, K)
+    X_for_patient = list()
+    labels_for_patient = list()
+    # Variances: rispetto al numero di slices di t (t_t) e al numero di slices di k (t_k).
+    Var_SF = list()
+    Var_SF_weighted = list()
+    list_Number_of_element_over_t = list()
+
+    for patient in patients:
+        ind = [patient == id for id in ids]
+        X_for_patient.append(z_[ind])
+        labels_for_patient.append(labels[ind])
+
+    for t in range(N_patients):
+        # COMPUTE OVER t:
+        # Dataset for patient ( Tensor of slices for patient ID )
+        X_ = X_for_patient[t]
+        # Distribuzioni del paziente nei clusters:
+        list_Number_of_element = list()
+        list_SF = list()
+        for k in np.unique(labels):
+
+            # indicizzazione per cercare le immagini correlate con un certo cluster:
+            select_t = [label.item() == k for label in labels_for_patient[t]]
+            if not len(X_[select_t]) == 0 or True:
+                # frequenza tra il numero di slices del paziente nel cluster k e il numero totale di slices del
+                # paziente t:
+                sf_t_t = len(X_[select_t]) / labels_for_patient[t].shape[0]
+                # salvo tutti i valori in delle liste, scalabili successivamente con tensori o array:
+
+                list_SF.append(sf_t_t)
+                list_Number_of_element.append(len(X_[select_t]))
+        Var ,Var_w = weighted_var_and_var(np.array(list_SF), np.array(list_Number_of_element))
+
+        # Varianza normale e pesata:
+        Var_SF_weighted.append(Var_w)
+        Var_SF.append(Var)
+
+        # Distribuzione di slices paziente over clusters:
+        list_Number_of_element_over_t.append(list_Number_of_element)
+
+    return Var_SF, Var_SF_weighted, list_Number_of_element_over_t
 
 def target_distribution(batch):
     """

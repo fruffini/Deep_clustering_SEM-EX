@@ -125,7 +125,7 @@ class BaseOptions(object):
         opt.isTrain = self.isTrain # train or test
         # Initialize the Paths Manager
         self.path_manager = PathManager(opt=opt)
-        opt.path_man =  self.path_manager
+        opt.path_man = self.path_manager
         # process opt.suffix
         if opt.suffix:
             suffix = ('_' + opt.suffix.format(**vars(opt))) if opt.suffix != '' else ''

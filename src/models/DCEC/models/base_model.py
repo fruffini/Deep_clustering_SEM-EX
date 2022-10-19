@@ -104,9 +104,6 @@ class BaseModel(ABC):
         if self.isTrain:
         # Add schedulers to class BaseModel.
             self.schedulers = {key_phase: networks.get_scheduler(optimizer, opt) for key_phase, optimizer in self.optimizers.items()}
-        if not self.isTrain or opt.continue_train:
-            load_suffix = 'iter_%d' % opt.load_iter if opt.load_iter > 0 else opt.epoch
-            self.load_networks(load_suffix)
         self.print_networks(opt.verbose)
 
     def update_learning_rate(self):

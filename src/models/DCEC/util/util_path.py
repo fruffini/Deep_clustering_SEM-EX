@@ -87,7 +87,12 @@ class PathManager(object):
             print("The phase %s has been created in the paths dictionary!" % (phase))
             return
 
-
+    def initialize_test_folders(self):
+        directories = ['tables', 'plots']
+        list(map(util_general.mkdir, [os.path.join(self.get_path('save_dir'), dir) for dir in directories]))
+        for dir, path in zip(sorted(directories), filter(os.path.isdir, os.scandir(self.get_path('save_dir')))):
+            self.set_dir(dir_to_extend="%s" % 'save_dir', path_ext=dir)
+        return self
 
     def initialize_model(self, model=str()):
         """ Initialize sub-foldings
@@ -95,8 +100,10 @@ class PathManager(object):
                 model (str): manually inserted model name
         """
         # directories tree division.
+
         directories = ['weights', 'plots', 'logs']  # create 3 subfoldings for weights files, logs  and plots.
         model_dir = "%s_dir" % (model if model.__len__() > 0 else "model")
+
         self.dict_phase.__setattr__(model_dir, os.path.join(self.get_path('save_dir'), self.opt.AE_type if model.__len__() == 0 else model))  # Model directory
         list(map(util_general.mkdir, [os.path.join(self.get_path(model_dir), dir) for dir in directories]))  # Create three subfolders for weights, plots and logs.
         # Extend directories tree from model directory.
@@ -147,7 +154,12 @@ class PathManager(object):
 
     def auto_enumerate(self):
 
-        """ Function that auto enumerate experiment by existing folders on disk """
+        """ Function that auto enumerate experiment by existing folders on disk
+        This function generate tree of path based omn an auto_enumeration sistem:
+            - Exp-ID subpath
+            - save_dir subpath
+
+        """
         phase_dir = self.get_path('phase_dir')
         list_paths = os.listdir(phase_dir)
         self.ID_max = None
