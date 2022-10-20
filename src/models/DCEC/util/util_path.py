@@ -2,6 +2,7 @@
 import ntpath
 import os
 import shutil
+import pathlib
 
 from easydict import EasyDict
 from util import util_general
@@ -181,6 +182,101 @@ class PathManager(object):
 
     def __repr__(self):
         return self.__class__.__name__
+
+
+
+
+PIPE = "│"
+ELBOW = "└──"
+TEE = "├──"
+PIPE_PREFIX = "│   "
+SPACE_PREFIX = "    "
+
+class DirectoryTree:
+    def __init__(self, root_dir):
+        self._generator = _TreeGenerator(root_dir)
+
+    def generate(self):
+        tree = self._generator.build_tree()
+        for entry in tree:
+            print(entry)
+        return tree
+class _TreeGenerator:
+    """
+    <_TreeGenerator> Object Class is needed to generete the tree structure of the directory structure.
+    FOr the pourpose of the tre construction there are some fixed attributeds
+    """
+    PIPE = "│"
+    ELBOW = "└──"
+    TEE = "├──"
+    PIPE_PREFIX = "│   "
+    SPACE_PREFIX = "    "
+
+    def __init__(self, root_dir):
+        """
+        Class <__init__> constructor. In this case, .__init__() takes root_dir as an argument. It holds the tree’s root directory path.
+         Note that you turn root_dir into a pathlib.Path object and assign it to the nonpublic instance attribute ._root_dir.
+        :param root_dir: <pathlib.Path> Object
+        """
+        self._root_dir = pathlib.Path(root_dir)
+        self._tree = [] # empty tree of directories
+
+    def build_tree(self):
+        """
+        Tree building function.
+        This public method generates and returns the directory tree diagram. Inside .build_tree(), you first call ._tree_head() to build the tree head.
+        Then you call ._tree_body() with ._root_dir as an argument to generate the rest of the diagram.
+        :return:
+        list, the tree of directories
+        """
+        self._tree_head()
+        self._tree_body(self._root_dir)
+        return self._tree
+
+    def _tree_head(self):
+        """
+        This method adds the name of the root directory to ._tree. Then you add a PIPE to connect the root directory to the rest of the tree.
+        :return: None
+        """
+        self._tree.append(f"{self._root_dir}{os.sep}")
+        self._tree.append(PIPE)
+
+    def _tree_body(self, directory, prefix=""):
+        """
+
+        :param directory:  holds the path to the directory you want to walk through. Note that directory should be a pathlib.Path object.
+        :param prefix: holds a prefix string that you use to draw the tree diagram on the terminal window.
+        This string helps to show up the position of the directory or file in the file system.
+        :return: None
+        """
+        entries = directory.iterdir()
+        entries = sorted(entries, key=lambda entry: entry.is_file())
+        entries_count = len(entries)
+        for index, entry in enumerate(entries):
+            connector = ELBOW if index == entries_count - 1 else TEE
+            if entry.is_dir():
+                self._add_directory(
+                    entry, index, entries_count, prefix, connector
+                )
+            else:
+                self._add_file(entry, prefix, connector)
+
+    def _add_directory(
+            self, directory, index, entries_count, prefix, connector
+    ):
+        self._tree.append(f"{prefix}{connector} {directory.name}{os.sep}")
+        if index != entries_count - 1:
+            prefix += PIPE_PREFIX
+        else:
+            prefix += SPACE_PREFIX
+        self._tree_body(
+            directory=directory,
+            prefix=prefix,
+        )
+        self._tree.append(prefix.rstrip())
+
+    def _add_file(self, file, prefix, connector):
+        self._tree.append(f"{prefix}{connector} {file.name}")
 
 
 def get_next_run_id_local(run_dir_root: str, module_name: str) -> int:

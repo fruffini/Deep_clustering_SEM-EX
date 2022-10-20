@@ -144,3 +144,32 @@ def plt_Var_Gini_K(file, save_dir):
     plt.savefig(os.path.join(save_dir, '{}__.png'.format(file_name)))
     plt.close()
     plt.clf()
+
+def plot_metrics_unsupervised_K(file, save_dir):
+    file_name = f"Metrics_Unsupervised_over_k",
+    data = pd.read_csv(file)
+    keys = data.keys()
+    K_ = data[keys[0]]
+    tabs = ["r", "k", "g"]
+    KEYS_ = {keys[1]: "Silhouette", keys[2]: "Calinski Harabasz", keys[3]: "Davies Bouldin"}
+    for i in range(len(data.keys()) - 1):
+        data_plot = data[keys[i + 1]]
+        plt.figure(figsize=(15, 10))
+        plt.plot(K_, data_plot, tabs[i], label=KEYS_[keys[i + 1]] + f'\n Valore massimo := '
+                                                                    f'{(np.round(np.max(data[keys[i + 1]]), 4))}, '
+                                                                    f'\n Valore Minimo :=  '
+                                                                    f'{(np.round(np.min(data[keys[i + 1]]), 4))}   ',
+
+            linewidth=4, )
+        plt.xticks(K_, fontsize=22)
+        plt.yticks(color='k', fontsize=22)
+        plt.xlabel('k di inizializzazione', fontsize=25)
+        plt.ylabel(KEYS_[keys[i + 1]], fontsize=25, color="k", fontweight="bold")
+        plt.grid()
+        plt.legend(fontsize=25)
+        plt.suptitle(f'Andamento {KEYS_[keys[i + 1]]} al variare di k di inizializzazione', fontsize=25, y=0.91,
+            fontweight="bold")
+        plt.savefig(os.path.join(save_dir, '{}___{}.png'.format(file_name, keys[i + 1])))
+        plt.clf()
+        plt.close()
+

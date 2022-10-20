@@ -81,7 +81,7 @@ def iterative_evaluation_test():
                 f"\n _______________________________________________________________________________________________"
             )
 
-            # Compute encoded
+            # Compute encoded samples
             dict_out = model.compute_encoded(dataloader)
             x_out = dict_out['x_out']
             ids_tot = dict_out['id']
@@ -89,13 +89,22 @@ def iterative_evaluation_test():
             labels, q_ = model.get_predictions_probabilities(z_latent=z_latent)
             id_unique_dict, inverse_id_dict = util_data.find_unique_id_dictionary(ids_=ids_tot)
 
+            # Metrics Computation
+            computed_metrics = util_clustering.metrics_unsupervised_CVI(Z_latent_samples=z_latent, labels_clusters=labels)
+
+            Si_score = computed_metrics['avg_Si_score']
+            CH_score = computed_metrics['Calinski-Harabasz score']
+            DB_score = computed_metrics['Davies-Douldin score']
+
+
             soft_label_mean_assegnation_score, avarage_P_prototypes, Mutual_information_score, indices_th, \
             P_for_cluster \
                 = util_clustering.compute_probabilities_variables(
                 labels=labels,
                 ids=ids_tot,
                 probability=q_,
-                id_dict=id_unique_dict
+                id_dict=id_unique_dict,
+                threshold= opt.threshold
             )
             # Funzione di calcolo della varianza e della distribuzione delle slices dei pazienti nei clusters:
             Var_SF, Var_SF_W, list_Number_of_element, = util_clustering.TF_Variances_ECF(
@@ -106,24 +115,18 @@ def iterative_evaluation_test():
             # funzione di calcolo degli indici di Gini, Gini cumulato over k e dervata discreta di Gina na cert
             gini_index_over_t, gini_cumulative = util_clustering.compute_GINI(list_distribution=list_Number_of_element)
 
-            logwriter_variances_gini_end.writerow(
-                dict(
-                    K=opt.num_clusters,
-                    Var=Var_SF,
-                    Var_w=Var_SF_W,
-                    Gini=gini_index_over_t
-                )
-            )
-            logwriter_probabilities_end.writerow(
-                dict(
-                    K=opt.num_clusters,
-                    mean_max_probabilities=soft_label_mean_assegnation_score,
-                    mean_n_prototypes=avarage_P_prototypes,
-                    Mutual_Information_Score=Mutual_information_score,
-                    P_for_cluster=P_for_cluster
-                )
-            )
+
             # WRITE LINES IN THE CSV FILES
+
+            logwriter_metrics_unsup_end.writerow(
+                dict(
+                    K=opt.num_clusters,
+                    SI_=Si_score,
+                    CH_=CH_score,
+                    DB_=DB_score
+                )
+            )
+
             logwriter_variances_gini_end.writerow(
                 dict(
                     K=opt.num_clusters,
@@ -153,6 +156,10 @@ def iterative_evaluation_test():
         # END ITER K:
     logfile_variances_Gini_csv.close(), logfile_probabilities_csv.close(), logfile_metrics_end.close(),
 
+    util_plots.plot_metrics_unsupervised_K(
+        file=metrics_file_path,
+        save_dir=plots_dir
+    )
     util_plots.plt_Var_Gini_K(
             file=Var_gini_file_path,
             save_dir=plots_dir
@@ -164,14 +171,14 @@ def iterative_evaluation_test():
 
 
 if __name__ == '__main__':
-
-    """sys.argv.extend([
+    import sys
+    sys.argv.extend([
         '--phase', 'test',
         '--AE_type', 'CAE3',
         '--dataset_name', 'MNIST',
         '--reports_dir', 'C:\\Users\\Ruffi\\Desktop\\Deep_clustering_SEM-EX\\reports',
         '--config_dir', 'C:\\Users\\Ruffi\\Desktop\\Deep_clustering_SEM-EX\\configs',
-    ])"""
+    ])
     Option = TestOptions() # test options
     opt =Option.parse()
     # Experiment Options
@@ -219,27 +226,13 @@ if __name__ == '__main__':
 
     #  _______________________________________________________________________________________________
     #  _______________________________________________________________________________________________
-    #           ITERATIVE TRAINING / PRETRAINING
+    #           ITERATIVE EVALUATION/ TEST
     #  _______________________________________________________________________________________________
     #  _______________________________________________________________________________________________
 
     iterative_evaluation_test()
 
-    # Lista cosa che mi servono
-    """
-    Organizzatore cartella test:
-    - risultati metriche
-    - Plot
-    - Risultati di alcuni training
-    - ...............
-    Ciclo for per poter ottenere tutte le metriche
-    
-    
-    
-    
-    
-    
-    """
+
 
 
 
