@@ -171,14 +171,6 @@ def iterative_evaluation_test():
 
 
 if __name__ == '__main__':
-    import sys
-    sys.argv.extend([
-        '--phase', 'test',
-        '--AE_type', 'CAE3',
-        '--dataset_name', 'MNIST',
-        '--reports_dir', 'C:\\Users\\Ruffi\\Desktop\\Deep_clustering_SEM-EX\\reports',
-        '--config_dir', 'C:\\Users\\Ruffi\\Desktop\\Deep_clustering_SEM-EX\\configs',
-    ])
     Option = TestOptions() # test options
     opt =Option.parse()
     # Experiment Options

@@ -27,7 +27,7 @@ cd  /mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/src/models/DCEC/bash
 
 #Pretrain
 sbatch pretrain_run.sh
-
+sbatch test_iterative_th75.sh
 # Train-iterative
 sbatch training_iterative_run-bs64-lr0.002.sh
 sbatch test_iterative_v1.sh
