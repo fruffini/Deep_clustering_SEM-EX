@@ -74,7 +74,8 @@ def iterative_evaluation_test():
         model = create_model(opt=opt)
         model.setup(opt=opt)
         if model.load_model_trained():
-
+            DT = util_path.DirectoryTree(root_dir=opt.reports_dir)
+            Tree = DT.generate()
             print(
                 f"\n _______________________________________________________________________________________________ "
                 f"\n INFORMATION: the DCEC model with K = {k} has been loaded.  "
@@ -171,6 +172,17 @@ def iterative_evaluation_test():
 
 
 if __name__ == '__main__':
+    import sys
+
+    """sys.argv.extend(
+        [
+            '--phase', 'test',
+            '--AE_type', 'CAE3',
+            '--dataset_name', 'MNIST',
+            '--reports_dir', 'C:\\Users\\Ruffi\\Desktop\\Deep_clustering_SEM-EX\\reports',
+            '--config_dir', 'C:\\Users\\Ruffi\\Desktop\\Deep_clustering_SEM-EX\\configs',
+        ]
+    )"""
     Option = TestOptions() # test options
     opt =Option.parse()
     # Experiment Options

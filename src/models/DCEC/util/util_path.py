@@ -184,14 +184,15 @@ class PathManager(object):
         return self.__class__.__name__
 
 
-
-
-PIPE = "│"
-ELBOW = "└──"
-TEE = "├──"
-PIPE_PREFIX = "│   "
+PIPE = "|"
+ELBOW = "|__"
+TEE = "|--"
+PIPE_PREFIX =  "|   "
 SPACE_PREFIX = "    "
 
+
+# Directory Tree Printer / Organizer
+# ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 class DirectoryTree:
     def __init__(self, root_dir):
         self._generator = _TreeGenerator(root_dir)
@@ -199,18 +200,14 @@ class DirectoryTree:
     def generate(self):
         tree = self._generator.build_tree()
         for entry in tree:
-            print(entry)
+            print(entry.encode('utf-8'))
         return tree
 class _TreeGenerator:
     """
     <_TreeGenerator> Object Class is needed to generete the tree structure of the directory structure.
     FOr the pourpose of the tre construction there are some fixed attributeds
+    Project added from https://realpython.com/directory-tree-generator-python/
     """
-    PIPE = "│"
-    ELBOW = "└──"
-    TEE = "├──"
-    PIPE_PREFIX = "│   "
-    SPACE_PREFIX = "    "
 
     def __init__(self, root_dir):
         """
@@ -250,7 +247,7 @@ class _TreeGenerator:
         :return: None
         """
         entries = directory.iterdir()
-        entries = sorted(entries, key=lambda entry: entry.is_file())
+        entries = sorted(entries, key=lambda entry: entry.is_file()) # This function iterate the generator of paths <entries>
         entries_count = len(entries)
         for index, entry in enumerate(entries):
             connector = ELBOW if index == entries_count - 1 else TEE
@@ -277,6 +274,7 @@ class _TreeGenerator:
 
     def _add_file(self, file, prefix, connector):
         self._tree.append(f"{prefix}{connector} {file.name}")
+# ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
 def get_next_run_id_local(run_dir_root: str, module_name: str) -> int:
