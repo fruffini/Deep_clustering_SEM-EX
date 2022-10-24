@@ -164,8 +164,10 @@ class PathManager(object):
         phase_dir = self.get_path('phase_dir')
         list_paths = os.listdir(phase_dir)
         self.ID_max = None
+
         if not list_paths.__len__() == 0:
             for EXP_directory in list_paths:
+                print(EXP_directory)
                 if self.opt.id_exp in EXP_directory.split('_')[1]:
                     self.set_dir(dir_to_extend='phase_dir', name_att="save", path_ext=EXP_directory)
                     return
