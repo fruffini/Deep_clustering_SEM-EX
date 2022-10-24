@@ -176,8 +176,7 @@ class PathManager(object):
                     self.ID_max = max([int(''.join(filter(str.isdigit, path))) for path in list_paths]) if self.ID_max is not None else self.ID_max
                     self.set_dir(dir_to_extend='phase_dir', name_att="save", path_ext="EXP_ID{}".format(self.ID_max + 1))
                     return
-                else:
-                    raise NotImplementedError('{} not implemented'.format(self.opt.id_exp))
+
         else:
             self.set_dir(dir_to_extend='phase_dir', name_att="save", path_ext="EXP_ID{}".format(1))
             return
