@@ -168,7 +168,9 @@ class CLARODataset(BaseDataset):
         """Initialization"""
         BaseDataset.__init__(self, opt)
         # Config and Directories
+
         self.config = edict(load_config('CLARO_configuration.yaml', config_directory=self.opt.config_dir))
+        opt.img_shape = (self.config['data']['image_size'], self.config['data']['image_size'])
         self.root_dir = self.opt.data_dir
         self.raw_dir = os.path.join(self.root_dir, self.config['data']['raw_dir'])
         self.interim_dir = os.path.join(self.root_dir, self.config['data']['interim_dir'])

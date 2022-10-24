@@ -54,7 +54,7 @@ class BaseOptions(object):
             help='Alpha coefficient for t-Student probability distribution.')
         parser.add_argument('--rec_type', type=str, default='bce', choices=['mse', 'bce', 'vanilla'], help='Type of '
                                                                                                          'reconstruction loss function.')
-        parser.add_argument('--AE_type', type=str, default='CAE2', choices=['CAE2', 'CAE3', 'CAE512'],
+        parser.add_argument('--AE_type', type=str, default='CAE2', choices=['CAE2', 'CAE3', 'CAE512', 'CAE224'],
             help='type of architecture for the Autoencoder')
         parser.add_argument('--activations', type=str, default='sigmoid', choices=['sigmoid', 'tanh', 'none'],
             help='Activations for Autoencoder.')
@@ -81,7 +81,7 @@ class BaseOptions(object):
         parser.add_argument('--suffix', default='', type=str,
             help='customized suffix: opt.name = opt.name + suffix: e.g., {model}_{netG}_size{load_size}')
         # Dataset images
-        parser.add_argument('--id_exp', type=str, default='ID1', choices=['auto', 'ID#'])
+        parser.add_argument('--id_exp', type=str, default='ID1')
         parser.add_argument('--dataset_name', required=True, default='MNIST', choices=['MNIST', 'CLARO'], help='CLARO or MNIST')
         parser.add_argument('--serial_batches', action='store_true', help='if true, takes images in order to make batches, otherwise takes them randomly')
         parser.add_argument('--num_threads', default=4, type=int, help='# threads for loading data')
