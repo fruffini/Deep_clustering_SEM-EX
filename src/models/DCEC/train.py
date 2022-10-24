@@ -187,6 +187,7 @@ if __name__ == '__main__':
     #  _______________________________________________________________________________________________
     dict_phase = {"train": 1, "pretrain": 0}
     if dict_phase[opt.phase]:
+        print(opt.verbose)
         iterative_training_over_k()
     else:
         # Model Definition

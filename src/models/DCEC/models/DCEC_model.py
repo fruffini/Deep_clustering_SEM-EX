@@ -238,7 +238,7 @@ class DCECModel(BaseModel):
         for v in self.acc_losses.values():
             message += ','
             message += '%.3f ' % (np.sum(v)/(iters/self.opt.batch_size))
-
+        print(self.opt.verbose)
         print(message) if self.opt.verbose else self.do_nothing() # print the message
         with open(self.log_losses, "a") as log_file:
             log_file.write('\n%s' % message)  # save the message
