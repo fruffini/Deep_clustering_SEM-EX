@@ -25,7 +25,7 @@ def pretrain():
         # Train the model for each value inside the k_values option list
         epoch_iter = 0
         model.update_learning_rate() if not total_iters == 0 else model.do_nothing()  # update learning rates linked to optimizer,
-        with tqdm(dataset.dataloader, unit="batch", desc="Progress bar pretraining phase") as tqdm_pret:
+        with tqdm(dataset.dataloader, unit="batch", desc="Progress bar pretraining phase", disable=opt.verbose) as tqdm_pret:
             for i, data in enumerate(tqdm_pret):
                 tqdm_pret.set_description(f"Epoch {epoch}")
                 # inner loop within one epoch
@@ -56,7 +56,7 @@ def train():
         epoch_start_time = time.time()  # timer for entire epoch
         epoch_iter = 0  # the total number of training iterations during a single epoch
         model.update_learning_rate() if not total_iters == 0 else model.do_nothing()  # update learning rates linked to optimizers.
-        with tqdm(dataset.dataloader, unit="batch", desc="Progress bar training phase") as tqdm_train:
+        with tqdm(dataset.dataloader, unit="batch", desc="Progress bar training phase", disable=opt.verbose) as tqdm_train:
             for ind, data in enumerate(tqdm_train):
                 tqdm_train.set_description(f"Epoch {epoch}")
                 # inner loop within one epoch
