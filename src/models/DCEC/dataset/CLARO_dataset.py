@@ -237,14 +237,14 @@ class CLARODataset(BaseDataset):
         x = loader(img_path=img_path, img_dim=self.config['data']['image_size'],
                    box=box, clip=self.clip, scale=self.scale, convert_to_uint8=self.convert_to_uint8, scale_by_255=self.scale_by_255)
         # DEBUG IMAGE
-        print(x.shape)
+        """print(x.shape)
         img = np.array(x)
         img = 255.0 * img
         img = img.astype(np.uint8)
         img = Image.fromarray(img[0, :, :])
         img.save(
             fp=os.path.join("/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/Data_temp",f"IMG_{patient_id + img_id}.tif")
-        )
+        )"""
         if self.transform is not None:
             x = self.transform(x)
         return x, patient_id, img_id
