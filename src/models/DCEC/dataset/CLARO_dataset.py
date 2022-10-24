@@ -236,7 +236,8 @@ class CLARODataset(BaseDataset):
                    box=box, clip=self.clip, scale=self.scale, convert_to_uint8=self.convert_to_uint8, scale_by_255=self.scale_by_255)
         # DEBUG IMAGE
         print(x.shape)
-        img = 255.0 * x
+        img = np.array(x)
+        img = 255.0 * img
         img = img.astype(np.uint8)
         img = Image.fromarray(img[0, :, :])
         img.save(
