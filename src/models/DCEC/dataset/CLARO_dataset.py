@@ -120,11 +120,9 @@ def loader(img_path, img_dim, box, clip, scale, convert_to_uint8, scale_by_255):
     # Select Box Area
     if box is not None:
         img = get_box(img, box, perc_border=0.5)
-        print(img.shape)
     # Resize
     if img_dim != img.shape[0]:
         img = cv2.resize(img, (img_dim, img_dim))
-        print(img.shape)
     # Clip
     if clip is not None:
         img = np.clip(img, clip['min'], clip['max'])
