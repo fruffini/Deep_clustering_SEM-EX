@@ -3,7 +3,7 @@
 seed: 42
 
 data:
-  image_size: 512
+  image_size: 224
   channel: 1
   range: [0,1]
 
