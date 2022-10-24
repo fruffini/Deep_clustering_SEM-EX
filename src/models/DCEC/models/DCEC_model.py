@@ -201,7 +201,7 @@ class DCECModel(BaseModel):
             img = img.astype(np.uint8)
             img = Image.fromarray(img[0,:,:])
             img.save(
-            fp=os.path.join(path_epoch, f"model_{self.__class__.__name__}_rec_IMG_epoch_{epoch}_IDpatient_{int(self.y_batch[i]) }_{i}.tif")
+            fp=os.path.join(path_epoch, f"model_{self.__class__.__name__}_rec_IMG_epoch_{epoch}_IDpatient_{int(self.y_batch[i]) }_{self.id_batch[i]}.tif")
             )
     def print_metrics(self, epoch) :
         """print current epoch metrics calculated on console and save them in the log direc
@@ -251,7 +251,9 @@ class DCECModel(BaseModel):
         """
         tensor = input[0]
         self.x_batch = tensor.type(torch.FloatTensor).to(self.device) # copy
-        self.y_batch = input[1]  # copy
+        self.y_batch = input[1]
+        self.id_batch = input[2] if self.opt.dataset_name else None
+        # copy
 
     def encode(self):
         """Run encoding pass"""

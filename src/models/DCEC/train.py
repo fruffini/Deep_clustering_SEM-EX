@@ -128,7 +128,7 @@ if __name__ == '__main__':
     #  _______________________________________________________________________________________________
     # System Settings
     # Put here debugging parametrization
-
+    torch.backends.cudnn.benchmark = True
     sys.path.extend(["./"])
     # Seed everything
     util_general.seed_all()
