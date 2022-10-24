@@ -75,7 +75,6 @@ def iterative_evaluation_test():
         model.setup(opt=opt)
         if model.load_model_trained():
             DT = util_path.DirectoryTree(root_dir=opt.reports_dir)
-            Tree = DT.generate()
             print(
                 f"\n _______________________________________________________________________________________________ "
                 f"\n INFORMATION: the DCEC model with K = {k} has been loaded.  "

@@ -144,7 +144,7 @@ if __name__ == '__main__':
     # Experiment Options
     OptionstTrain = TrainOptions()
     opt = OptionstTrain.parse()
-    opt.img_shape = (512, 512) if opt.dataset_name == "CLARO" else (28, 28)
+    opt.img_shape = (224, 224) if opt.dataset_name == "CLARO" else (28, 28)
     #  _______________________________________________________________________________________________
     # Submit run:
     print("Submit run")
