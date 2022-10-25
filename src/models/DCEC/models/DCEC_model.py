@@ -143,7 +143,7 @@ class DCECModel(BaseModel):
             # 4) creation of the model path/folder and subfolders for logs/weights/plots for the testing and training phase.
             self.save_dir = self.get_path_phase(name='save_dir')
             self.opt.path_man.set_phase("train")
-            self.opt.path_man.auto_enumerate()
+            self.opt.path_man.exp_name_assignment()
             self.opt.path_man.initialize_model(model=self.name)
             self.load_dir = self.get_path_phase(name=string_model_dir)
             self.opt.path_man.set_phase("test")
@@ -306,7 +306,7 @@ class DCECModel(BaseModel):
         """Set the pretrain folders in the path manager."""
         print("INFO: settings pretrain paths into DCEC models.")
         self.opt.path_man.set_phase(phase="pretrain")
-        self.opt.path_man.auto_enumerate()
+        self.opt.path_man.exp_name_assignment()
         self.opt.path_man.initialize_model()
 
     def load_model_pretrained(self):

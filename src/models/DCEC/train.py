@@ -139,6 +139,7 @@ if __name__ == '__main__':
             '--dataset_name', 'MNIST',
             '--reports_dir', 'C:\\Users\\Ruffi\\Desktop\\Deep_clustering_SEM-EX\\reports',
             '--config_dir', 'C:\\Users\\Ruffi\\Desktop\\Deep_clustering_SEM-EX\\configs',
+            '--id_exp','ID3'
         ])
     #  _______________________________________________________________________________________________
     # Experiment Options

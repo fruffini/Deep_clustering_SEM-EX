@@ -32,7 +32,7 @@ class PathManager(object):
         # This state defines which sub folder of the main wxperiment has to be taken. It could be pretrain/train/
         # set the phase reference in the paths dictionary tree.
         self.set_phase(phase=self.opt.phase)
-        self.auto_enumerate()
+        self.exp_name_assignment()
 
     def set_phase(self, phase):
         """
@@ -153,7 +153,7 @@ class PathManager(object):
         """
         return self.dict_phase.__getattribute__(name)
 
-    def auto_enumerate(self):
+    def exp_name_assignment(self):
 
         """ Function that auto enumerate experiment by existing folders on disk
         This function generate tree of path based omn an auto_enumeration sistem:
@@ -163,23 +163,11 @@ class PathManager(object):
         """
         phase_dir = self.get_path('phase_dir')
         list_paths = os.listdir(phase_dir)
-        print(list_paths)
-        self.ID_max = None
+        IDs_ = [EXP_directory.split('_')[1] for EXP_directory in list_paths]
+        self.set_dir(dir_to_extend='phase_dir', name_att="save", path_ext=f"EXP_{self.opt.id_exp}")
+        print(IDs_)
 
-        if not list_paths.__len__() == 0:
-            for EXP_directory in list_paths:
-                if self.opt.id_exp in EXP_directory.split('_')[1]:
-                    self.set_dir(dir_to_extend='phase_dir', name_att="save", path_ext=EXP_directory)
-                    return
-                elif self.opt.id_exp == 'auto':
-                    # In auto mode the manager build a new root where to save the experiment, and assign the ID_# number searching for maximum ones.
-                    self.ID_max = max([int(''.join(filter(str.isdigit, path))) for path in list_paths]) if self.ID_max is not None else self.ID_max
-                    self.set_dir(dir_to_extend='phase_dir', name_att="save", path_ext="EXP_ID{}".format(self.ID_max + 1))
-                    return
 
-        else:
-            self.set_dir(dir_to_extend='phase_dir', name_att="save", path_ext="EXP_ID{}".format(1))
-            return
 
     def __repr__(self):
         return self.__class__.__name__
