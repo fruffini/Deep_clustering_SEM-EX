@@ -23,7 +23,7 @@ module load Python/3.8.6-GCCcore-10.2.0
 cd /mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/src/models/DCEC
 
 # Train HERE YOU RUN YOUR PROGRAM
-python train.py --batch_size=128 --gamma=0.07 --lr_tr=0.0002 --delta_check --phase train --dataset_name CLARO --k_0=3 --k_fin=15 --update_interval=3500 --delta_label=0.002 --data_dir '/mimer/NOBACKUP/groups/snic2022-5-277/ltronchin/data' --config_dir '/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/configs' --reports_dir '/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/reports' --embedded_dimension=256 --AE_type CAE224 --n_epochs=500 --n_epochs_decay=300 --save_latest_freq=14000 --gpu_ids '0,1,2,3' --box_apply --verbose
+python train.py --batch_size=128 --gamma=0.07 --lr_tr=0.0002 --delta_check --phase train --dataset_name CLARO --k_0=3 --k_fin=15 --update_interval=3500 --delta_label=0.002 --data_dir '/mimer/NOBACKUP/groups/snic2022-5-277/ltronchin/data' --config_dir '/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/configs' --reports_dir '/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/reports' --embedded_dimension=256 --AE_type CAE224 --n_epochs=500 --n_epochs_decay=300 --save_latest_freq=14000 --gpu_ids '0,1,2,3' --box_apply --verbose --id_exp ID3
 
 # Deactivate venv
 deactivate
