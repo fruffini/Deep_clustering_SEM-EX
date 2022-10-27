@@ -29,7 +29,9 @@ def Plotter():
     # paths for the metrics' files
     tables_dir = opt.path_man.get_path('tables_dir')
     plots_dir = opt.path_man.get_path('plots_dir')
-
+    now = datetime.now()
+    date_time = now.strftime("[(%d/%m/%Y)(%H:%M:%S)]")
+    opt.path_man.set_dir(dir_to_extend='plots_dir', name_att="new_plots", path_ext=f"Plots__{date_time}")
     metrics_file_path = os.path.join(tables_dir, 'DCECs_log_clustering_metrics_over_k.csv')
     Var_gini_file_path = os.path.join(tables_dir, 'DCECs_log_variances_gini_.csv')
     probabilities_file_path = os.path.join(tables_dir, 'DCECs_log_probabilities_over_k.csv')
