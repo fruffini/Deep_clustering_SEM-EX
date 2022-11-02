@@ -144,7 +144,7 @@ def compute_probabilities_variables(labels, probability, ids, id_dict, threshold
     # Prendo le probilità di assegnazione delle labels, e ne calcolo il valore massimo:
     saved = probability.max(1)
     # Inserisco un threshold di confidenza.
-    th = threshold
+    th = threshold/100
     # Prendo i valori massimi di probabilità, e ne calcolo il valore medio:
     max_values = [el.item() for el in saved[0].detach()]
     mean_max_probabilities = np.mean(max_values)
@@ -168,9 +168,9 @@ def compute_probabilities_variables(labels, probability, ids, id_dict, threshold
     # Report print probabilities
     print('-----------------Report Probabilities Debugger ---------------------')
     print('ids: ', ids)
+    print('indices_th: ', indices_th)
     print('labels_th: ', labels_th)
     print('ids_th: ', ids_th)
-    print('max_values: ',max_values)
     print('Max values mean: ', mean_max_probabilities)
     print('--------------------------------------------------------------------')
 
