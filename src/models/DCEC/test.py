@@ -32,15 +32,15 @@ def iterative_evaluation_test():
     save_dir = opt.path_man.get_path('save_dir')
     # Submit run:
     print("Submit run")
-    log_path = os.path.join(save_dir, 'test_run')
-    run_id = get_next_run_id_local(os.path.join(log_path, opt.dataset_name), opt.phase)  # GET run id
+    log_path_test = os.path.join(save_dir, 'test_run')
+    run_id = get_next_run_id_local(log_path, opt.phase)  # GET run id
     run_name = "{0:05d}--{1}--EXP_{2}".format(run_id, opt.phase, opt.id_exp)
     log_dir_exp = os.path.join(log_path, opt.dataset_name, run_name)
     util_general.mkdir(log_dir_exp)
 
-
-    tables_dir = opt.path_man.get_path('tables_dir')
-    plots_dir = opt.path_man.get_path('plots_dir')
+    tables_dir = os.path.join(log_dir_exp, 'tables')
+    plots_dir = os.path.join(log_dir_exp, 'plots')
+    util_general.mkdirs([tables_dir, plots_dir])
     metrics_file_path = os.path.join(tables_dir, 'DCECs_log_clustering_metrics_over_k.csv')
     Var_gini_file_path = os.path.join(tables_dir, 'DCECs_log_variances_gini_.csv')
     probabilities_file_path = os.path.join(tables_dir, 'DCECs_log_probabilities_over_k.csv')
