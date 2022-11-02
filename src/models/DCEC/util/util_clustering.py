@@ -167,9 +167,11 @@ def compute_probabilities_variables(labels, probability, ids, id_dict, threshold
 
     # Report print probabilities
     print('-----------------Report Probabilities Debugger ---------------------')
-    print('labels_th:', labels_th)
-    print('ids_th:', labels_th)
-    print('Max values mean:', mean_max_probabilities)
+    print('ids: ', ids)
+    print('labels_th: ', labels_th)
+    print('ids_th: ', ids_th)
+    print('max_values: ',max_values)
+    print('Max values mean: ', mean_max_probabilities)
     print('--------------------------------------------------------------------')
 
 

@@ -5,7 +5,7 @@
       <paths name="ALVIS CLUSTER SERVER">
         <serverdata>
           <mappings>
-            <mapping deploy="/tmp/pycharm_project_736" local="$PROJECT_DIR$" />
+            <mapping deploy="/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/temp" local="$PROJECT_DIR$" />
           </mappings>
         </serverdata>
       </paths>

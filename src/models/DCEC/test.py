@@ -8,6 +8,8 @@ from util import util_clustering
 from util import util_data
 from util import util_general
 from util import util_plots
+
+from util.util_path import get_next_run_id_local
 from options.test_options import TestOptions
 from util import util_path
 from dataset import create_dataset
@@ -27,6 +29,16 @@ def iterative_evaluation_test():
     opt.path_man.initialize_test_folders()
 
     # paths for the metrics' files
+    save_dir = opt.path_man.get_path('save_dir')
+    # Submit run:
+    print("Submit run")
+    log_path = os.path.join(save_dir, 'test_run')
+    run_id = get_next_run_id_local(os.path.join(log_path, opt.dataset_name), opt.phase)  # GET run id
+    run_name = "{0:05d}--{1}--EXP_{2}".format(run_id, opt.phase, opt.id_exp)
+    log_dir_exp = os.path.join(log_path, opt.dataset_name, run_name)
+    util_general.mkdir(log_dir_exp)
+
+
     tables_dir = opt.path_man.get_path('tables_dir')
     plots_dir = opt.path_man.get_path('plots_dir')
     metrics_file_path = os.path.join(tables_dir, 'DCECs_log_clustering_metrics_over_k.csv')
