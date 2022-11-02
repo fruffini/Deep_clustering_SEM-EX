@@ -30,11 +30,14 @@ def iterative_evaluation_test():
 
     # paths for the metrics' files
     save_dir = opt.path_man.get_path('save_dir')
+    print('save_dir: ', save_dir)
     # Submit run:
-    print("Submit run")
+    print("metrics_file")
     log_path_test = os.path.join(save_dir, 'test_run')
-    run_id = get_next_run_id_local(log_path, opt.phase)  # GET run id
-    run_name = "{0:05d}--{1}--EXP_{2}".format(run_id, opt.phase, opt.id_exp)
+    run_id = get_next_run_id_local(log_path_test, opt.phase)  # GET run id
+    now = datetime.now()
+    date_time = now.strftime("[%d/%m/%Y-%H:%M:%S]")
+    run_name = "{s}".format(date_time )
     log_dir_exp = os.path.join(log_path, opt.dataset_name, run_name)
     util_general.mkdir(log_dir_exp)
     print('log_dir_exp', log_dir_exp)
