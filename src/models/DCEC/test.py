@@ -36,8 +36,8 @@ def iterative_evaluation_test():
     log_path_test = os.path.join(save_dir, 'test_run')
     run_id = get_next_run_id_local(log_path_test, opt.phase)  # GET run id
     now = datetime.now()
-    date_time = now.strftime("[%d/%m/%Y-%H:%M:%S]")
-    log_dir_exp = os.path.join(log_path, opt.dataset_name, date_time)
+    date_time = now.strftime("%Y/%m/%d-%H:%M:%S")
+    log_dir_exp = os.path.join(log_path_test, opt.dataset_name, date_time)
     util_general.mkdir(log_dir_exp)
     print('log_dir_exp', log_dir_exp)
     tables_dir = os.path.join(log_dir_exp, 'tables')
