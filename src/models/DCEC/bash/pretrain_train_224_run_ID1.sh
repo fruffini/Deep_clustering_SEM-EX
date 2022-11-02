@@ -12,6 +12,7 @@
 
 
 # Activate venv
+# shellcheck disable=SC2164
 cd /mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/envs/venv
 source bin/activate
 

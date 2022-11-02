@@ -55,7 +55,7 @@ def iterative_evaluation_test():
     logwriter_probabilities_end = csv.DictWriter(
         logfile_probabilities_csv,
         fieldnames=['K', 'mean_max_probabilities', 'mean_n_prototypes', 'Mutual_Information_Score', 'P_for_cluster']
-        )
+    )
 
     # Scrittura header dei file csv:
     logwriter_metrics_unsup_end.writeheader()
@@ -65,9 +65,11 @@ def iterative_evaluation_test():
 
     for k in np.arange(opt.k_0, opt.k_fin + 1):  # outer loop for different model instanced with different cluster number intialization MODEL_k -> MODEL_k+1
         #  _______________________________________________________________________________________________
-        print(f"\n _______________________________________________________________________________________________ "
-              f"\n INFORMATION: the current number of clusters is {k} "
-              f"\n _______________________________________________________________________________________________")
+        print(
+            f"\n _______________________________________________________________________________________________ "
+            f"\n INFORMATION: the current number of clusters is {k} "
+            f"\n _______________________________________________________________________________________________"
+            )
         #  _______________________________________________________________________________________________
         # Model selection and setup
         opt.num_clusters = k  # set the number of clusters.
@@ -96,7 +98,6 @@ def iterative_evaluation_test():
             CH_score = computed_metrics['Calinski-Harabasz score']
             DB_score = computed_metrics['Davies-Douldin score']
 
-
             soft_label_mean_assegnation_score, avarage_P_prototypes, Mutual_information_score, indices_th, \
             P_for_cluster \
                 = util_clustering.compute_probabilities_variables(
@@ -104,17 +105,16 @@ def iterative_evaluation_test():
                 ids=ids_tot,
                 probability=q_,
                 id_dict=id_unique_dict,
-                threshold= opt.threshold
+                threshold=opt.threshold
             )
             # Funzione di calcolo della varianza e della distribuzione delle slices dei pazienti nei clusters:
             Var_SF, Var_SF_W, list_Number_of_element, = util_clustering.TF_Variances_ECF(
                 z_=z_latent,
                 labels=labels,
                 ids=ids_tot
-                )
+            )
             # funzione di calcolo degli indici di Gini, Gini cumulato over k e dervata discreta di Gina na cert
             gini_index_over_t, gini_cumulative = util_clustering.compute_GINI(list_distribution=list_Number_of_element)
-
 
             # WRITE LINES IN THE CSV FILES
 
@@ -161,12 +161,12 @@ def iterative_evaluation_test():
         save_dir=plots_dir
     )
     util_plots.plt_Var_Gini_K(
-            file=Var_gini_file_path,
-            save_dir=plots_dir
+        file=Var_gini_file_path,
+        save_dir=plots_dir
     )
     util_plots.plt_probabilities_NMI(
-            file=probabilities_file_path,
-            save_dir=plots_dir
+        file=probabilities_file_path,
+        save_dir=plots_dir
     )
 
 
@@ -182,8 +182,8 @@ if __name__ == '__main__':
             '--config_dir', 'C:\\Users\\Ruffi\\Desktop\\Deep_clustering_SEM-EX\\configs',
         ]
     )"""
-    Option = TestOptions() # test options
-    opt =Option.parse()
+    Option = TestOptions()  # test options
+    opt = Option.parse()
     # Experiment Options
 
     opt.img_shape = (512, 512) if opt.dataset_name == "CLARO" else (28, 28)
@@ -234,10 +234,3 @@ if __name__ == '__main__':
     #  _______________________________________________________________________________________________
 
     iterative_evaluation_test()
-
-
-
-
-
-
-

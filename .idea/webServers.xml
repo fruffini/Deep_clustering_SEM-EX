@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="bb4d7e01-d14e-4624-97ba-fb41a69d2d8a" name="alvis1.c3se.chalmers.se">
+        <fileTransfer accessType="SFTP" host="alvis1.c3se.chalmers.se" port="22" sshConfigId="fa21c471-0809-4167-876f-022f51b4b27b" sshConfig="soda@alvis1.c3se.chalmers.se:22 password">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+      <webServer id="9c226552-b572-4b6c-a1dc-4eb1655719c6" name="soda@alvis1.c3se.chalmers.se:22 password (1)">
+        <fileTransfer accessType="SFTP" host="alvis1.c3se.chalmers.se" port="22" sshConfigId="fa21c471-0809-4167-876f-022f51b4b27b" sshConfig="soda@alvis1.c3se.chalmers.se:22 password" />
+      </webServer>
+      <webServer id="2183988b-e52c-4bec-8247-b082d8ab80ac" name="ALVIS CLUSTER SERVER">
+        <fileTransfer accessType="SFTP" host="alvis1.c3se.chalmers.se" port="22" sshConfigId="fa21c471-0809-4167-876f-022f51b4b27b" sshConfig="soda@alvis1.c3se.chalmers.se:22 password" />
+      </webServer>
+    </option>
+  </component>
+</project>

@@ -152,7 +152,6 @@ def compute_probabilities_variables(labels, probability, ids, id_dict, threshold
     indices_th = [max_ > th for max_ in max_values]
     labels_th = labels[indices_th]
     ids_th = ids[indices_th]
-
     mean_max = mean_max_probabilities
     prototypes_for_cluster = list()
     for label in real_K:
@@ -165,10 +164,16 @@ def compute_probabilities_variables(labels, probability, ids, id_dict, threshold
     # Normalized Mutual information Score
     id_int_array = np.array([id_dict[id] for id in ids])
     Mutual_information_criterion = NMI(labels_true=id_int_array, labels_pred=labels)
+
+    # Report print probabilities
+    print('-----------------Report Probabilities Debugger ---------------------')
+    print('labels_th:', labels_th)
+    print('ids_th:', labels_th)
+    print('Max values mean:', mean_max_probabilities)
+    print('--------------------------------------------------------------------')
+
+
     return mean_max, mean_n_prototypes, Mutual_information_criterion, indices_th, prototypes_for_cluster
-
-
-
 
 def compute_GINI(list_distribution):
     gini_index_for_t = [gini(element[np.nonzero(element)].astype(np.float64)) for element in np.array(
