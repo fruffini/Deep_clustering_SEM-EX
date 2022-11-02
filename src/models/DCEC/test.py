@@ -37,7 +37,7 @@ def iterative_evaluation_test():
     run_name = "{0:05d}--{1}--EXP_{2}".format(run_id, opt.phase, opt.id_exp)
     log_dir_exp = os.path.join(log_path, opt.dataset_name, run_name)
     util_general.mkdir(log_dir_exp)
-
+    print('log_dir_exp', log_dir_exp)
     tables_dir = os.path.join(log_dir_exp, 'tables')
     plots_dir = os.path.join(log_dir_exp, 'plots')
     util_general.mkdirs([tables_dir, plots_dir])
