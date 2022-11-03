@@ -187,7 +187,7 @@ def iterative_evaluation_test():
 
 
 import sys
-sys.argv.extend(
+"""sys.argv.extend(
         [
             'module load CUDA/11.3.1',
             'module load Python/3.8.6-GCCcore-10.2.0',
@@ -207,6 +207,7 @@ sys.argv.extend(
             '--k_fin', '15'
         ]
     )
+"""
 if __name__ == '__main__':
 
     Option = TestOptions()  # test options
