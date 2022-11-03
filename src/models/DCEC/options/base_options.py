@@ -42,9 +42,7 @@ class BaseOptions(object):
         parser.add_argument('--reports_dir', type=str, default='./reports', help='Customized report direcrtory folder, else it would be put like /src/reports ' )
         parser.add_argument('--config_dir', type=str, required=True, default="C:\\Users\\Ruffi\\Desktop\\Deep_clustering_SEM-EX\\configs", help='configs files folder IMPORTANT:')
 
-
-
-        parser.add_argument('--model', default='DCEC', choices=['DCEC', 'VAE'], help='Model name for the experiment.')
+        parser.add_argument('--model', default='DCEC', choices=['DCEC'], help='Model name for the experiment.')
         parser.add_argument('--AE_cfg_file', default='AE_layers_settings.yaml',
              help='Layers setting file for CAE')
         parser.add_argument('--input_nc', type=int, default=1, help='# of input image channels: 3 for RGB and 1 for grayscale')

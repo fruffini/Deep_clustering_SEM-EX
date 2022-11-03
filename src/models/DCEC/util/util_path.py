@@ -265,6 +265,19 @@ class _TreeGenerator:
         self._tree.append(f"{prefix}{connector} {file.name}")
 # ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+def find_exp(path_log_run:str, MODE):
+    if MODE == 'last':
+        import re
+        # last path is equal to the path_log
+        for sub_folder in os.listdir(path_log_run):
+            res = int(re.search(r'\d+', sub_folder).group())
+            if not isinstance(res, int): return path_log_run
+        last_max = int(max(os.listdir(path_log_run)))
+        last_path = os.path.join(path_log_run, str(last_max))
+        find_exp(path_log_run=last_path, MODE=MODE)
+
+
+
 
 def get_next_run_id_local(run_dir_root: str, module_name: str) -> int:
     """Reads all directory names in a given directory (non-recursive) and returns the next (increasing) run id. Assumes IDs are numbers at the start of the directory names."""

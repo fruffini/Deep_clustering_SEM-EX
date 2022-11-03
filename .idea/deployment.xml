@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" autoUpload="Always" serverName="soda@alvis1.c3se.chalmers.se:22 password" remoteFilesAllowedToDisappearOnAutoupload="false">
+  <component name="PublishConfigData" autoUpload="Always" serverName="soda@alvis1.c3se.chalmers.se:22 password" remoteFilesAllowedToDisappearOnAutoupload="false" confirmBeforeUploading="false" compareModeInSync="TEXT">
+    <option name="confirmBeforeUploading" value="false" />
     <serverData>
       <paths name="ALVIS CLUSTER SERVER">
         <serverdata>
@@ -9,24 +10,10 @@
           </mappings>
         </serverdata>
       </paths>
-      <paths name="alvis1.c3se.chalmers.se">
-        <serverdata>
-          <mappings>
-            <mapping local="$PROJECT_DIR$" web="/" />
-          </mappings>
-        </serverdata>
-      </paths>
       <paths name="soda@alvis1.c3se.chalmers.se:22 password">
         <serverdata>
           <mappings>
             <mapping deploy="/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/temp" local="$PROJECT_DIR$" />
-          </mappings>
-        </serverdata>
-      </paths>
-      <paths name="soda@alvis1.c3se.chalmers.se:22 password (1)">
-        <serverdata>
-          <mappings>
-            <mapping local="$PROJECT_DIR$" web="/" />
           </mappings>
         </serverdata>
       </paths>

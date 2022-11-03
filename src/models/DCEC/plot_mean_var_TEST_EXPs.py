@@ -1,8 +1,11 @@
 # Test code for to avaluate
 import os
 import csv
+
+import click
 import numpy as np
 import torch
+from easydict import EasyDict
 
 from util import util_clustering
 from util import util_data
@@ -12,11 +15,18 @@ from options.test_options import TestOptions
 from util import util_path
 from dataset import create_dataset
 from models import create_model
-
+from datetime import datetime
 global model
 global dataset
-
-
+import sys
+class ConvertStrToList(click.Option):
+    def type_cast_value(self, ctx, value):
+        try:
+            value = str(value)
+            assert value.count('[') == 1 and value.count(']') == 1
+            return list(int(x) for x in value.replace('"', "'").split('[')[1].split(']')[0].split(','))
+        except Exception:
+            raise click.BadParameter(value)
 def Plotter():
     """ Function to plot metrics once evaluation/encoding phase is completed """
     # ------ ITERATIVE TESTING OVER k ------
@@ -48,44 +58,41 @@ def Plotter():
             file=probabilities_file_path,
             save_dir=plots_dir
     )
-
-
-if __name__ == '__main__':
-    import sys
-
-    """sys.argv.extend(
+sys.argv.extend(
         [
-            '--phase', 'test',
-            '--AE_type', 'CAE3',
-            '--dataset_name', 'MNIST',
-            '--reports_dir', 'C:\\Users\\Ruffi\\Desktop\\Deep_clustering_SEM-EX\\reports',
-            '--config_dir', 'C:\\Users\\Ruffi\\Desktop\\Deep_clustering_SEM-EX\\configs',
-        ]
-    )"""
-    Option = TestOptions() # test options
-    opt =Option.parse()
-    # Experiment Options
+            '--exp_date', 'last',
+            '--id_interval', '[1,3]'
 
-    opt.img_shape = (512, 512) if opt.dataset_name == "CLARO" else (28, 28)
-    #  _______________________________________________________________________________________________
+        ]
+    )
+@click.command(context_settings=dict(help_option_names=['-h', '--help']))
+@click.option('--data_dir', help='Directory for input dataset', default='/mimer/NOBACKUP/groups/snic2022-5-277/ltronchin/data', metavar='PATH')
+@click.option('--phase', help='Phase.',  type=str, default='test')
+@click.option('--reports_dir', help='Directory for reports', default='/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/reports', metavar='PATH')
+@click.option('--dataset_name', help='Name of the input dataset',  type=str, default='CLARO')
+@click.option('--max_patients', help='Number of patients to preprocess', type=int, default=100000)
+@click.option('--exp_date', help='Date of the experiment to compact in a single plot', type=click.Choice(['last']), required=True)
+@click.option('--gpu_ids', type=str, default='0', help='gpu ids: e.g. 0  0,1,2, 0,2. use -1 for CPU')
+@click.option('--id_interval', cls=ConvertStrToList, default=[],  help='Exp ID list to test and evaluate. ')
+def main(**kwargs):
+
+    opt = EasyDict(**kwargs)
+
+    # Configuration Functions:
     # Submit run:
     print("Submit run")
-    log_path = os.path.join(opt.reports_dir, 'log_run')
-    run_id = util_path.get_next_run_id_local(os.path.join(log_path, opt.dataset_name), opt.phase)  # GET run id
-    run_name = "{0:05d}--{1}--EXP_{2}".format(run_id, opt.phase, opt.id_exp)
+    log_path = os.path.join(opt.reports_dir, '_MultiExps_log_run')
+    run_id = util_path.get_next_run_id_local(os.path.join(log_path, opt.dataset_name), opt.phase)
+    now = datetime.now()
+    date_time = now.strftime("%d:%m:%Y")
+    # GET run id
+    run_name = "{0:05d}--{1}".format(run_id, date_time)
     log_dir_exp = os.path.join(log_path, opt.dataset_name, run_name)
     util_general.mkdir(log_dir_exp)
     # Initialize Logger - run folder
-    Option.print_options(opt=opt, path_log_run=log_dir_exp)
     logger = util_general.Logger(file_name=os.path.join(log_dir_exp, 'log.txt'), file_mode="w", should_flush=True)
 
-    #  _______________________________________________________________________________________________
-    #  _______________________________________________________________________________________________
-    #                   DATA / MODEL / TRAIN
-    #  _______________________________________________________________________________________________
-    #  _______________________________________________________________________________________________
     # Welcome
-    from datetime import datetime
     now = datetime.now()
     date_time = now.strftime("%d/%m/%Y, %H:%M:%S")
     print("Hello!", date_time)
@@ -100,20 +107,25 @@ if __name__ == '__main__':
         print('__CUDA Device Total Memory [GB]:', torch.cuda.get_device_properties(device).total_memory / 1e9)
     print("-------------------------   INFO END   -----------------------------------")
     #  _______________________________________________________________________________________________
-    # Dataset Options
-    # In this point dataset and dataloader are genereted for the next step
+    #  _______________________________________________________________________________________________
+    #           ITERATIVE EVALUATION MULTIEXPs
+    #  _______________________________________________________________________________________________
+    #  _______________________________________________________________________________________________
+    for ID in range(opt.id_interval[0], opt.id_interval[1] + 1):
 
-    dataset = create_dataset(opt)
-    opt.dataset_size = dataset.__len__()
+        path_exp = '/ mimer / NOBACKUP / groups / snic2022 - 5 - 277 / fruffini / SEM - EX / reports / experiment_name_CLARO / test / EXP_ID{0}'.format(ID).replace(' ', '')
+        path_log_run = os.path.join(path_exp, 'test_run',opt.dataset_name)
+        util_path.find_exp(path_log_run=path_log_run, MODE='last')
 
-    #  _______________________________________________________________________________________________
-    #  _______________________________________________________________________________________________
-    #           ITERATIVE EVALUATION/ TEST
-    #  _______________________________________________________________________________________________
-    #  _______________________________________________________________________________________________
+
+
+
+
+
 
     Plotter()
-
+if __name__ == '__main__':
+    main()
 
 
 
