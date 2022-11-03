@@ -23,7 +23,7 @@ module load Python/3.8.6-GCCcore-10.2.0
 cd /mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/src/models/DCEC
 pip install matplotlib
 # Train HERE YOU RUN YOUR PROGRAM
-python test.py --phase test --dataset_name CLARO --threshold=95 --k_0=3 --k_fin=15 --data_dir '/mimer/NOBACKUP/groups/snic2022-5-277/ltronchin/data' --config_dir '/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/configs' --reports_dir '/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/reports' --embedded_dimension=256 --AE_type CAE224 --gpu_ids '0' --id_exp ID3 --box_apply
+python test.py --phase test --dataset_name CLARO --threshold=95 --k_0=3 --k_fin=15 --data_dir '/mimer/NOBACKUP/groups/snic2022-5-277/ltronchin/data' --config_dir '/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/configs' --reports_dir '/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/reports' --embedded_dimension=256 --AE_type CAE224 --gpu_ids '0,1' --id_exp ID3 --box_apply
 
 # Deactivate venv
 deactivate

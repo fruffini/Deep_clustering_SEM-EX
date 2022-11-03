@@ -186,18 +186,29 @@ def iterative_evaluation_test():
     )
 
 
-if __name__ == '__main__':
-    import sys
-
-    """sys.argv.extend(
+import sys
+sys.argv.extend(
         [
+            'module load CUDA/11.3.1',
+            'module load Python/3.8.6-GCCcore-10.2.0',
             '--phase', 'test',
             '--AE_type', 'CAE3',
-            '--dataset_name', 'MNIST',
-            '--reports_dir', 'C:\\Users\\Ruffi\\Desktop\\Deep_clustering_SEM-EX\\reports',
-            '--config_dir', 'C:\\Users\\Ruffi\\Desktop\\Deep_clustering_SEM-EX\\configs',
+            '--dataset_name', 'CLARO',
+            '--data_dir','/mimer/NOBACKUP/groups/snic2022-5-277/ltronchin/data',
+            '--reports_dir', '/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/reports',
+            '--config_dir', '/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/configs',
+            '--embedded_dimension', '256',
+            '--AE_type', 'CAE224',
+            '--gpu_ids','0',
+            '--id_exp','ID2',
+            '--box_apply',
+            '--threshold', '95',
+            '--k_0', '3',
+            '--k_fin', '15'
         ]
-    )"""
+    )
+if __name__ == '__main__':
+
     Option = TestOptions()  # test options
     opt = Option.parse()
     # Experiment Options
