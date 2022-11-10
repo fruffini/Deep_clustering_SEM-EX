@@ -80,7 +80,7 @@ class BaseOptions(object):
             help='customized suffix: opt.name = opt.name + suffix: e.g., {model}_{netG}_size{load_size}')
         # Dataset images
         parser.add_argument('--id_exp', type=str, default='ID1')
-        parser.add_argument('--dataset_name', required=True, default='MNIST', choices=['MNIST', 'CLARO'], help='CLARO or MNIST')
+        parser.add_argument('--dataset_name', required=True, default='MNIST', choices=['MNIST', 'CLARO', 'GLOBES'], help='CLARO or MNIST')
         parser.add_argument('--serial_batches', action='store_true', help='if true, takes images in order to make batches, otherwise takes them randomly')
         parser.add_argument('--num_threads', default=4, type=int, help='# threads for loading data')
         parser.add_argument('--batch_size', type=int, default=32, help='input q_ij size')

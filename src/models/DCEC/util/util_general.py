@@ -4,6 +4,7 @@ import shutil
 import random
 import sys
 
+import click
 import numpy as np
 import torch
 import yaml
@@ -82,7 +83,14 @@ def load_config(config_file, config_directory):
         config = yaml.safe_load(file)
     return config
 
-
+class ConvertStrToList(click.Option):
+    def type_cast_value(self, ctx, value):
+        try:
+            value = str(value)
+            assert value.count('[') == 1 and value.count(']') == 1
+            return list(int(x) for x in value.replace('"', "'").split('[')[1].split(']')[0].split(','))
+        except Exception:
+            raise click.BadParameter(value)
 def mkdirs(paths: list):
     """create empty paths if they don't exist
 
@@ -105,7 +113,7 @@ def mkdir(path: str):
     if not os.path.exists(path):
         os.makedirs(path)
 
-def del_dir(path):
+def del_dir(path: str):
     """delete all the folders after the defined path
 
        Parameters:

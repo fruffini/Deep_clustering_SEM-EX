@@ -33,7 +33,144 @@ def plt_probabilities_NMI(file, save_dir):
     plt.yticks(fontsize=22)
     fig1.savefig(os.path.join(save_dir, '{}___.png'.format(file_name)))
     plt.close(fig1)
+def plt_probabilities_NMI_mean_var(data, save_dir, Ks):
+    K_ = np.array(Ks)
+    plt.close()
+    plt.clf()
+    file_name = "Metrics_Combined-APN_NMI_over_EXPs"
+    Metrics_mean = data['Metrics_Combined_mean']
+    Metrics_var = data['Metrics_Combined_var']
+    plt.figure(figsize=(25, 12))
+    plt.plot(
+        K_, Metrics_mean, 'acqua',
+        label="$mean_{t \in T} VAR_wt$ al variare di k", linewidth=6, )
+    plt.errorbar(
+        x=K_, y=Metrics_mean, yerr=Metrics_var, color='r', linestyle='None', linewidth=3, fmt='o', label='St-Dev'
+    )
+    plt.xticks(K_, fontsize=22)
+    plt.yticks(fontsize=22)
+    plt.grid()
+    plt.xlabel('k di inizializzazione', fontsize=25)
+    plt.ylabel('$\sqrt{NMI_{01} * APN_{01}}$', fontsize=25.0, color="k", position=[-1, 0], )
+    plt.suptitle('Plot Metric Combined $\mathbf{\sqrt{NMI_{01} * APN_{01}}}$', fontsize=28, y=0.94,
+        fontweight='bold')
+    plt.savefig(os.path.join(save_dir, '{}__.png'.format(file_name)))
+    plt.show()
+    plt.clf()
+def plt_Var_Gini_K_EXPs_mean_var(data, save_dir, Ks):
 
+
+    K_ = np.array(Ks)
+    keys = list(data.keys())
+
+    matrix_gini_mean = np.array(data['Gini_mean'])
+    matrix_gini_var = np.array(data['Gini_var'])
+    matrix_Var_w_mean = np.array(data['Var_w_mean'])
+
+    matrix_Var_w_var = np.array(data['Var_w_var'])
+
+    N_K = K_.shape[0]
+    tabs = ["r", "k"]
+    # _________________________________________________________________________________________________________________
+    # Plot Varianza
+
+    # _________________________________________________________________________________________________________________
+    # Plot Varianza Pesata
+    N_Var_w_matrix_mean, Delta_Var_w_matrix_mean, D_sum_Var_w_matrix_mean = util_clustering.calc_Delta_metrics(matrix_Var_w_mean[:, np.newaxis],
+        N01=False)
+    N_Var_w_matrix_var, Delta_Var_w_matrix_var, D_sum_Var_w_matrix_var = util_clustering.calc_Delta_metrics(
+        matrix_Var_w_var[:, np.newaxis],
+        N01=False
+        )
+
+
+    file_name = "Mean_Var_w_over_EXPs"
+    plt.clf()
+    plt.close()
+    plt.figure(1, figsize=(25, 12))
+    data_plot = N_Var_w_matrix_mean.copy()
+    plt.plot(K_, data_plot, tabs[0],
+        label="$mean_{t \in T} VAR_wt$ al variare di k", linewidth=6, )
+    plt.errorbar(
+        x=K_, y=data_plot, yerr=N_Var_w_matrix_var[:,0], color='k', linestyle='None', linewidth=3, fmt='o', label='St-Dev'
+    )
+    plt.xticks(K_, fontsize=22)
+    plt.yticks(fontsize=22)
+    plt.grid()
+    plt.xlabel('k di inizializzazione', fontsize=25)
+    plt.ylabel("$\mathbf{mean_{t \in T} VAR_wt}$", color="k", position=[-1, 0], fontsize=25, )
+    plt.suptitle('Plot dell\'andamento $\mathbf{mean_{t \in T} VAR_wt}$ al variare di k ', fontsize=28, y=0.94,
+        fontweight='bold')
+    plt.savefig(os.path.join(save_dir, '{}__.png'.format(file_name)))
+    plt.show()
+    plt.clf()
+
+    # derivata discreta tra K+1 e K
+    file_name = "Delta_Var_w_over_EXPs"
+    plt.figure(2, figsize=(25, 15))
+    plt.clf()
+    plt.grid()
+    for i in range(Delta_Var_w_matrix_mean.shape[0]):
+        plt.bar(K_[i + 1], D_sum_Var_w_matrix_mean[i], linewidth=3, label=str(K_[i + 1]) + "-" + str(K_[i]))
+        plt.errorbar(K_[i + 1], D_sum_Var_w_matrix_mean[i], yerr=D_sum_Var_w_matrix_var[i], fmt="o", color="k")
+    plt.ylabel("$\mathbf{\Delta_{k} \sum_{t \in T}VAR_wt} $", fontsize=28, color='k')
+    plt.xlabel('k+1  -  k', fontsize=25, color='k', )
+    # plt.xticks(K_[1:], [str(K_[i + 1]) + "-" + str(K_[i]) for i in range(matrix_delta_var.shape[0])])
+    plt.xticks(K_[1:], [str(K_[i + 1]) + "-" + str(K_[i]) for i in range(D_sum_Var_w_matrix_mean.shape[0])], fontsize=22)
+    plt.yticks(fontsize=22)
+    plt.suptitle(
+        'Plot dell\'andamento $\mathbf{\Delta_k \sum_{t \in T}VAR_wt}$ tra k+1 e k, con $\mathbf{k \in [4, 23]}$',
+        fontsize=28, y=0.94, fontweight='bold')
+    plt.savefig(os.path.join(save_dir, '{}__.png'.format(file_name)))
+    plt.show()
+
+    # _________________________________________________________________________________________________________________
+    # Plot GINI
+
+    Gini_mean, Delta_Gini_mean, Delta_Gini_Sum_mean = util_clustering.calc_Delta_metrics(matrix_gini_mean[:, np.newaxis], N01=False)
+    Gini_var, Delta_Gini_var, Delta_Gini_Sum_var = util_clustering.calc_Delta_metrics(matrix_gini_var[:, np.newaxis], N01=False)
+
+    file_name = "Gini_mean_t_over_EXPs"
+    data_plot = Gini_mean.copy()
+    plt.figure(3, figsize=(25, 12))
+    plt.clf()
+
+    plt.errorbar(
+        x=K_, y=data_plot, yerr=Gini_var[:, 0], color='r', linestyle='None', linewidth=3, fmt='o', label='St-Dev'
+    )
+    plt.plot(K_, data_plot, tabs[0],
+        label="$\mathbf{mean_{t \in T} GINI_t}$ al variare di k", linewidth=5, color="b")
+    plt.xticks(K_, fontsize=22)
+    plt.yticks(fontsize=22)
+    plt.grid()
+    plt.xlabel('k di inizializzazione', fontsize=25)
+    plt.ylabel("$\mathbf{mean_{t \in T} GINI_t}$", color="k", position=[-1, 0], fontsize=25)
+    plt.suptitle('Plot dell\'andamento $\mathbf{mean_{t \in T} GINI_t}$ al variare di k ', fontweight='bold',
+        fontsize=28, y=0.94)
+    plt.savefig(os.path.join(save_dir, '{}__.png'.format(file_name)))
+    plt.close()
+    plt.clf()
+
+    # derivata discreta tra K+1 e K
+
+    file_name = "Gini_derivative_over_Exps"
+    plt.figure(4, figsize=(25, 15))
+    plt.clf()
+    plt.grid()
+    for i in range(Delta_Var_w_matrix_mean.shape[0]):
+        plt.bar(K_[i + 1], Delta_Gini_Sum_mean[i], linewidth=3, label=str(K_[i + 1]) + "-" + str(K_[i]))
+        plt.errorbar(K_[i + 1], Delta_Gini_Sum_mean[i], yerr=Delta_Gini_Sum_var[i], fmt="o", color="k")
+    plt.ylabel("$ \mathbf{\Delta_{k}\sum_{t \in T} GINI_t }$", fontsize=25, color='k')
+    plt.xlabel('k+1  -  k', fontsize=25, color='k', )
+    # plt.xticks(K_[1:], [str(K_[i + 1]) + "-" + str(K_[i]) for i in range(matrix_delta_var.shape[0])])
+    plt.xticks(K_[1:], [str(K_[i + 1]) + "-" + str(K_[i]) for i in range(Delta_Var_w_matrix_mean.shape[0])], fontsize=20)
+    plt.yticks(fontsize=22)
+    plt.suptitle(
+        'Plot dell\'andamento $\mathbf{\Delta_k  \sum_{t \in T}GINI_t}$ tra k+1 e k, con $\mathbf{ k \in [4, 23]}$',
+        fontsize=28, y=0.94, fontweight='bold')
+    plt.savefig(os.path.join(save_dir, '{}__.png'.format(file_name)))
+    plt.show()
+    plt.clf()
 def plt_Var_Gini_K(file, save_dir):
     data = pd.read_csv(file)
     keys = data.keys()
@@ -144,6 +281,36 @@ def plt_Var_Gini_K(file, save_dir):
     plt.savefig(os.path.join(save_dir, '{}__.png'.format(file_name)))
     plt.close()
     plt.clf()
+def plot_metrics_unsupervised_EXPs_mean_var(data, save_dir, Ks):
+    file_name = "Metrics_Unsupervised_over_Exps"
+    K_ = np.array(Ks)
+    keys = list(data.keys())
+    tabs = ["r", "", "k", "", "g", ""]
+    for i in range(0, len(keys), 2):
+        key = keys[i]
+        data_plot = data[keys[i]]
+        var_ = data[keys[i + 1]]
+        plt.clf()
+        plt.figure(figsize=(20, 9))
+        plt.errorbar(
+            x=K_, y=data_plot, yerr=var_, color=tabs[i], linestyle='None',linewidth=3, fmt='-o', label='St-Dev' + keys[i].split('_')[0]
+        )
+        plt.plot(
+            K_, data_plot, tabs[i], label='Mean ' + keys[i].split('_')[0], linewidth=6, )
+        plt.xticks(K_, fontsize=22)
+        plt.yticks(color='k', fontsize=22)
+        plt.xlabel('Number of Clusters', fontsize=25)
+        plt.ylabel(key, fontsize=25, color="k", fontweight="bold")
+        plt.grid()
+        plt.legend(fontsize=25)
+        plt.suptitle(
+            f'Plot of {keys[i]} and Standard Deviation over Experiments', fontsize=25, y=0.91,
+            fontweight="bold"
+        )
+        plt.savefig(os.path.join(save_dir, '{}___{}.png'.format(file_name, keys[i].split('_')[0])))
+        plt.close()
+        plt.clf()
+
 
 def plot_metrics_unsupervised_K(file, save_dir):
     file_name = f"Metrics_Unsupervised_over_k",

@@ -65,7 +65,7 @@ def train():
                     opt.delta_count += 1 if delta_bool and epoch > 500 else 0
 
                     model.print_metrics(epoch=epoch)
-                    if total_iters > 0 and opt.delta_count>1 and not np.unique(model.y_prediction).__len__() <= 1 and epoch > 500:
+                    if total_iters > 0 and opt.delta_count>1 and not np.unique(model.y_prediction).__len__() <= 1 and epoch > 600:
                         print('\nReached tolerance threshold. Stopping training.\n', flush=False)
                         exit_ = True
                         break
@@ -122,7 +122,15 @@ def iterative_training_over_k():
         #  _______________________________________________________________________________________________
         #  _______________________________________________________________________________________________
 
-
+sys.argv.extend([
+            '--phase', 'train',
+            '--AE_type', 'CAE3',
+            '--dataset_name', 'GLOBES',
+            '--reports_dir', 'C:\\Users\\Ruffi\\Desktop\\Deep_clustering_SEM-EX\\reports',
+            '--config_dir', 'C:\\Users\\Ruffi\\Desktop\\Deep_clustering_SEM-EX\\configs',
+            '--'
+            '--id_exp','ID3'
+        ])
 
 if __name__ == '__main__':
     #  _______________________________________________________________________________________________
@@ -132,15 +140,7 @@ if __name__ == '__main__':
     sys.path.extend(["./"])
     # Seed everything
     util_general.seed_all()
-    if '\\Ruffi\\Desktop' in os.getcwd():
-        sys.argv.extend([
-            '--phase', 'train',
-            '--AE_type', 'CAE3',
-            '--dataset_name', 'MNIST',
-            '--reports_dir', 'C:\\Users\\Ruffi\\Desktop\\Deep_clustering_SEM-EX\\reports',
-            '--config_dir', 'C:\\Users\\Ruffi\\Desktop\\Deep_clustering_SEM-EX\\configs',
-            '--id_exp','ID3'
-        ])
+
     #  _______________________________________________________________________________________________
     # Experiment Options
     OptionstTrain = TrainOptions()

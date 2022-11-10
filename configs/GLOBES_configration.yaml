@@ -1,0 +1,14 @@
+### CLARO Dataset   ###
+
+seed: 42
+
+data:
+  image_size: 224
+  channel: 1
+  range: [0,1]
+
+  data_dir: data_raw
+  interim_dir: GLOBES/interim
+  raw_dir: GLOBES/raw
+  data_table: data.xlsx
+  convert_to_uint8: True

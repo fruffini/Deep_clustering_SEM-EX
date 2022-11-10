@@ -3,18 +3,18 @@
   <component name="PublishConfigData" autoUpload="Always" serverName="soda@alvis1.c3se.chalmers.se:22 password" remoteFilesAllowedToDisappearOnAutoupload="false" confirmBeforeUploading="false" compareModeInSync="TEXT">
     <option name="confirmBeforeUploading" value="false" />
     <serverData>
-      <paths name="ALVIS CLUSTER SERVER">
-        <serverdata>
-          <mappings>
-            <mapping deploy="/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/temp" local="$PROJECT_DIR$" />
-          </mappings>
-        </serverdata>
-      </paths>
       <paths name="soda@alvis1.c3se.chalmers.se:22 password">
         <serverdata>
           <mappings>
-            <mapping deploy="/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/temp" local="$PROJECT_DIR$" />
+            <mapping deploy="/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX" local="$PROJECT_DIR$" />
           </mappings>
+          <excludedPaths>
+            <excludedPath local="true" path="$PROJECT_DIR$/cartella DOCUMENTI utili SEM-EX" />
+            <excludedPath local="true" path="$PROJECT_DIR$/reports" />
+            <excludedPath local="true" path="$PROJECT_DIR$/data" />
+            <excludedPath local="true" path="$PROJECT_DIR$/RISULTATI WORKSTATION" />
+            <excludedPath local="true" path="$PROJECT_DIR$/venv_GENERALI" />
+          </excludedPaths>
         </serverdata>
       </paths>
     </serverData>
