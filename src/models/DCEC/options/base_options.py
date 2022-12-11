@@ -34,7 +34,7 @@ class BaseOptions(object):
         # basic parameters
         #parser.add_argument('--dataroot', required=True,
         #    help='path to images (should have subfolders trainA, trainB, valA, valB, etc)')
-        parser.add_argument('--name', type=str, default='experiment_name',
+        parser.add_argument('--experiment_name', default='experiment_name',
             help='name of the experiment. It decides where to store samples and models')
         parser.add_argument('--use_wandb', action='store_true', help='use wandb')
         parser.add_argument('--gpu_ids', type=str, default='0', help='gpu ids: e.g. 0  0,1,2, 0,2. use -1 for CPU')
@@ -80,8 +80,8 @@ class BaseOptions(object):
             help='customized suffix: opt.name = opt.name + suffix: e.g., {model}_{netG}_size{load_size}')
         # Dataset images
         parser.add_argument('--id_exp', type=str, default='ID1')
-        parser.add_argument('--dataset_name', required=True, default='MNIST', choices=['MNIST', 'CLARO', 'GLOBES'], help='CLARO or MNIST')
-        parser.add_argument('--serial_batches', action='store_true', help='if true, takes images in order to make batches, otherwise takes them randomly')
+        parser.add_argument('--dataset_name', required=True, default='MNIST', choices=['MNIST', 'CLARO', 'GLOBES', 'GLOBES_2'], help='CLARO or MNIST')
+        parser.add_argument('--shuffle_batches', action='store_true', help='if true, randomizes the order to make batches, otherwise takes them in order')
         parser.add_argument('--num_threads', default=4, type=int, help='# threads for loading data')
         parser.add_argument('--batch_size', type=int, default=32, help='input q_ij size')
         parser.add_argument(
@@ -138,6 +138,7 @@ class BaseOptions(object):
             if id >= 0:
                 opt.gpu_ids.append(id)
         if len(opt.gpu_ids) > 0:
+            print('CONFIGURATION GPUS: ', opt.gpu_ids[0])
             torch.cuda.set_device(opt.gpu_ids[0])
 
         self.opt = opt
@@ -168,3 +169,5 @@ class BaseOptions(object):
             opt_file.write('\n')
 
 
+if __name__ == "__main__":
+    pass

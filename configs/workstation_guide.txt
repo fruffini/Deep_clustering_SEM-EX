@@ -70,7 +70,7 @@ cd /mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/envs/venv
 source bin/activate
 
 # Load modules
-module load CUDA/11.3.1
+module load CUDA/11.7.0
 module load Python/3.8.6-GCCcore-10.2.0
 
 # Executes the code
@@ -80,3 +80,54 @@ python test.py --phase test --dataset_name CLARO --threshold=75 --k_0=4 --k_fin=
 
 # Deactivate venv
 deactivate
+
+
+.......................................................................................................................................................................
+
+UNIX COMMAND FOR RESOURCES NAVIGATIONS
+
+A the top of ierarchy of each folder in a UNIX machine there is
+- root directory: '/'
+
+prints the names of the files and directories in the current directory
+ COMMAND: ls
+
+ We can make its output more comprehensible by using the -F option which tells ls to classify the output by adding a marker to file and directory names to indicate what they are:
+ COMMAND: ls -F
+ OUTPUT: 1) trailing / indicates that this is a directory,
+         2) @ indicates a link,
+         3) * indicates an executable
+
+To show others options
+ COMMAND: ls --help
+
+
+To show the current directory where the user is looking
+ COMMAND: pwd
+
+To change directory
+ COMMAND: cd .. ( to return to the parent folder )
+ COMMAND: cd <path_name, or directory inside the pwd>
+
+
+# ---------------------------------------------------------
+
+
+sbatch: submit batch jobs
+srun: submit interactive jobs
+jobinfo (squeue): view the job-queue and the state of jobs in queue, shows amount of idling resources
+scontrol show job <jobid>: show details about job, including reasons why it's pending
+sprio: show all your pending jobs and their priority
+scancel: cancel a running or pending job
+sinfo: show status for the partitions (queues): how many nodes are free, how many are down, busy, etc.
+sacct: show scheduling information about past jobs
+projinfo: show the projects you belong to, including monthly allocation and usage
+
+
+
+# PYTHON VERSION
+module Python/3.10.4-GCCcore-11.3.0
+module swap guarantees the chenage for python shared on the workstation alvis1
+
+
+

@@ -1,10 +1,10 @@
 import itertools
 from collections import OrderedDict
-
+import pandas as pd
 from PIL import Image
 import torch
 from torchvision.utils import save_image
-
+from tqdm import tqdm
 from util import util_general
 from util.util_clustering import kmeans, metrics_unsupervised_CVI
 from .base_model import BaseModel
@@ -29,6 +29,7 @@ class DCECModel(BaseModel):
         # Iterative learning
         parser.add_argument('--k_0', type=int, default=4, help='Starting number of centroids for the iterative training.')
         parser.add_argument('--k_fin', type=int, default=10, help='Final number of centroids for the iterative training.')
+        parser.add_argument('--redo_encoding', action='store_true', help='Redo the encoding during the test phase')
         if is_train:
 
             # DCECs Parameters
@@ -37,6 +38,7 @@ class DCECModel(BaseModel):
             parser.add_argument('--delta_label', default=0.0008, type=float, help='delta label stop condition between every update iteration interval.')
             parser.add_argument('--delta_check', action='store_true', help='if true, checks the delta label condition, otherwise it continue training until the last epoch')
             parser.add_argument('--delta_count', default=0, type=int, help='delta label stop condition between every update iteration interval.')
+            parser.add_argument('--activation_delta', default=500, type=int, help='Start of delta check on labels assignments.')
 
         return parser
 
@@ -90,6 +92,7 @@ class DCECModel(BaseModel):
 
             # Directory overwriting:
             self.opt.path_man.set_dir(dir_to_extend="plots_dir", path_ext="reconstructed", force=True)  #reconstructed folder
+            print('path_reconstructed :', self.opt.path_man.get_path(name='reconstructed_dir'))
             # metrics log
             self.metrics_names = {'avg_Si_score', 'Calinski-Harabasz score', 'Davies-Bouldin score'}
             self.set_metrics()
@@ -149,10 +152,11 @@ class DCECModel(BaseModel):
             self.opt.path_man.set_phase("test")
     def set_log_losses(self):
         """create the accuracy losses and logging file to store training losses"""
+        # TODO correct the file extension of the loggers
+
 
         self.acc_losses = OrderedDict({name_losses: list() for name_losses in self.loss_names})
         self.log_losses = os.path.join(self.get_path_phase(name='logs_dir'), 'losses_{}_log_{}.txt'.format(self.opt.phase, self.name if self.opt.phase == "train" else self.opt.AE_type))
-
         first = 'epoch'
         for k in self.loss_names:
             first += ',' + k
@@ -200,9 +204,15 @@ class DCECModel(BaseModel):
             img = 255.0 * img
             img = img.astype(np.uint8)
             img = Image.fromarray(img[0,:,:])
-            img.save(
-            fp=os.path.join(path_epoch, f"model_{self.__class__.__name__}_rec_IMG_epoch_{epoch}_IDpatient_{int(self.y_batch[i]) }_{self.id_batch[i]}.tif")
-            )
+            if self.opt.dataset_name =='GLOBES':
+                img.save(
+                    fp=os.path.join(path_epoch, f"model_{self.__class__.__name__}_rec_IMG_epoch_{epoch}_IDpatient_{self.y_batch[i]}_{self.id_batch[i]}.tif")
+                )
+            else:
+
+                img.save(
+                    fp=os.path.join(path_epoch, f"model_{self.__class__.__name__}_rec_IMG_epoch_{epoch}_IDpatient_{self.y_batch[i]}_{self.id_batch[i]}.tif")
+                )
     def print_metrics(self, epoch) :
         """print current epoch metrics calculated on console and save them in the log direc
 
@@ -239,10 +249,26 @@ class DCECModel(BaseModel):
             message += ','
             message += '%.3f ' % (np.sum(v)/(iters/self.opt.batch_size))
         print(self.opt.verbose)
-        print(message) if self.opt.verbose else self.do_nothing() # print the message
+        print(message) # print the message
         with open(self.log_losses, "a") as log_file:
             log_file.write('\n%s' % message)  # save the message
 
+    def print_current_losses_validation(self, epoch, iters):
+        """print current losses on console; also save the losses to the disk
+
+        Parameters:
+            epoch (int) -- current epoch
+            iters (int) -- current training iteration during this epoch (reset to 0 at the end of every epoch)
+            losses (OrderedDict) -- training losses stored in the format of (name, float) pairs
+        """
+        message = str(epoch)
+        for v in self.acc_losses.values():
+            message += ','
+            message += '%.3f ' % (np.sum(v)/(iters/self.opt.batch_size))
+        print(self.opt.verbose)
+        print(message) # print the message
+        with open(self.log_losses, "a") as log_file:
+            log_file.write('\n%s' % message)  # save the message
     def set_input(self, input):
         """Unpack input data from dataloader and perform eventually preprocessing
         Parameters:
@@ -274,6 +300,15 @@ class DCECModel(BaseModel):
             labels_y = q_ij.argmax(1).detach().cpu()  # selecting labels
             return [labels_y, q_ij.detach().cpu()]
 
+    def save_actual_labels(self, dictionary_data):
+
+        # Creation of the labels directory
+        labels_file = os.path.join(self.opt.path_man.get_path('labels_dir'), 'data_clusterslabels_K_%s_.xlsx' %format(str(self.opt.num_clusters)))
+        data = pd.DataFrame.from_dict(dictionary_data)
+        with pd.ExcelWriter(labels_file) as writer:
+            data.to_excel(writer, sheet_name='Data_complete')
+            print('Data Saved')
+
 
 
 
@@ -289,6 +324,9 @@ class DCECModel(BaseModel):
             q_ij = self.netCL(self.z_encoded_tot)  # probabilities computed for each samples to belong to each n_clusters.
             self.target_prob = target_distribution(q_ij=q_ij)  # set target distribution
             y_pred = q_ij.argmax(1).detach().cpu()  # selecting labels
+
+            self.save_actual_labels(dictionary_data = {'patient_id': output['id'], 'image_id': output['image_id'], 'clusters_labels': list(y_pred)})
+            print(f' The list of unique labels assigned {np.unique(np.array(y_pred))}')
             y_pred_last = np.copy(self.y_prediction)
             self.y_prediction = np.copy(y_pred)  # set the new labels assignment
             # check stop criterion
@@ -325,16 +363,20 @@ class DCECModel(BaseModel):
         z_latent_out = None
         print('INFO: encoding all data on course...')
         with torch.no_grad():
-            for data in dataloader:
-                self.set_input(data)
-                z_latent_batch = self.encode()  # pass batch of samples to the Encoder
-                # ----------------------------------
-                # Concatenate z latent samples and x samples together
-                x_out = np.concatenate((x_out, data[0]), 0) if x_out is not None else data[0]
-                y_out = np.concatenate((y_out, data[1]), 0) if y_out is not None else data[1]
-                z_latent_out = np.concatenate((z_latent_out, z_latent_batch.cpu().detach().numpy()), 0) if z_latent_out is not None else z_latent_batch.cpu().detach().numpy()
+            with tqdm(dataloader, unit="batch", desc="Progress bar ENCODING DATA...", disable=self.opt.verbose) as tqdm_encoding:
+                for data in tqdm_encoding:
+                    self.set_input(data)
+                    z_latent_batch = self.encode()  # pass batch of samples to the Encoder
+                    # ----------------------------------
+                    # Concatenate z latent samples and x samples together
+                    x_out = np.concatenate((x_out, data[0]), 0) if x_out is not None else data[0]
+                    y_out = np.concatenate((y_out, data[1]), 0) if y_out is not None else data[1]
+                    id_out = np.concatenate((y_out, data[1]), 0) if y_out is not None else data[1]
+                    z_latent_out = np.concatenate((z_latent_out, z_latent_batch.cpu().detach().numpy()), 0) if z_latent_out is not None else z_latent_batch.cpu().detach().numpy()
+
+
         print('INFO: encoding done!')
-        return {'x_out': torch.from_numpy(x_out), 'id': y_out, 'z_latent': torch.from_numpy(z_latent_out)}
+        return {'id': list(y_out), 'z_latent': torch.from_numpy(z_latent_out), 'x_out': list(x_out), 'image_id': list(id_out)}
 
     def prepare_training(self, dataloader):
         """Procedure to start the training of Deep Convolutional Embeddings Clustering model
@@ -352,6 +394,7 @@ class DCECModel(BaseModel):
         # ______________________________________________________________________________________________________________
         #  Change folders
         self.setup(opt=self.opt)  # reconfigure optimizers
+        self.opt.path_man.set_dir(dir_to_extend='DCECModel_2_dir', path_ext='labels', name_att='labels')
         self.opt.path_man.change_phase(self.opt.phase)  # change phase dictionary for reference
     def forward(self):
         """Run forward pass train/pretrain"""

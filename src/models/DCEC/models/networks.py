@@ -1,12 +1,11 @@
 import functools
 import torch.nn as nn
-import torch.optim.lr_scheduler
 from torch.nn import init
 from torch.optim import lr_scheduler
 from util.shape_functions import *
 from util.util_general import *
 from easydict import EasyDict as edict
-
+from cosine_annealing_warmup import CosineAnnealingWarmupRestarts
 
 
 
@@ -64,6 +63,8 @@ def get_scheduler(optimizer, opt):
         scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.2, threshold=0.01, patience=5)
     elif opt.lr_policy == 'cosine':
         scheduler = lr_scheduler.CosineAnnealingLR(optimizer, T_max=opt.n_epochs, eta_min=0)
+    elif opt.lr_policy == 'cosine-warmup':
+        scheduler = CosineAnnealingWarmupRestarts(optimizer, first_cycle_steps=opt.n_epochs + opt.n_epochs_decay, cycle_mult=1.0, max_lr=opt.lr_tr, min_lr=opt.lr_tr*0.001, warmup_steps=opt.n_epochs, gamma=0.5)
     else:
         return NotImplementedError('learning rate policy [%s] is not implemented', opt.lr_policy)
     return scheduler

@@ -8,7 +8,7 @@ data:
   range: [0,1]
 
   data_dir: data_raw
-  interim_dir: GLOBES/interim
-  raw_dir: GLOBES/raw
+  interim_dir: interim
+  raw_dir: raw
   data_table: data.xlsx
   convert_to_uint8: True

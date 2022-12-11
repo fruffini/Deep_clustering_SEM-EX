@@ -82,7 +82,29 @@ def load_config(config_file, config_directory):
     with open(os.path.join(config_directory, config_file)) as file:
         config = yaml.safe_load(file)
     return config
+def print_CUDA_info():
+    import torch
+    import os
+    print("\n")
+    print("".center(100, '|'))
+    print(" CUDA GPUs REPORT ".center(100, '|'))
+    print("".center(100, '|'))
+    print("1) Number of GPUs devices: ", torch.cuda.device_count())
+    print('2) CUDNN VERSION:', torch.backends.cudnn.version())
+    print('3) Nvidia SMI terminal command: \n \n', )
+    os.system('nvidia-smi')
 
+    for device in range(torch.cuda.device_count()):
+        print("|  DEVICE NUMBER : {%d} |".center(100, '-') % (device))
+        print('| 1) CUDA Device Name:', torch.cuda.get_device_name(device))
+        print('| 2) CUDA Device Total Memory [GB]:', torch.cuda.get_device_properties(device).total_memory / 1e9)
+        print("|")
+
+    print("".center(100, '|'))
+    print(" GPU REPORT END ".center(100, '|'))
+    print("".center(100, '|'))
+    print('\n \n')
+    return
 class ConvertStrToList(click.Option):
     def type_cast_value(self, ctx, value):
         try:

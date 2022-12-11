@@ -26,9 +26,10 @@ class PathManager(object):
         # Options
         self.opt = opt
         # ---------------- Main directory of the experiment
-        self.main_dir = os.path.join(opt.reports_dir, opt.name + '_' + opt.dataset_name)
+        self.main_dir = os.path.join(opt.reports_dir, opt.experiment_name + '_' + opt.dataset_name)
         # Fix the main experimental folder, if it's the default one, experiments will be saved inside <./src/reports> folder.
         self.paths = EasyDict()
+        self.paths['main_dir'] = self.main_dir
         # This state defines which sub folder of the main wxperiment has to be taken. It could be pretrain/train/
         # set the phase reference in the paths dictionary tree.
         self.set_phase(phase=self.opt.phase)
@@ -144,7 +145,12 @@ class PathManager(object):
 
         """
         return self.paths.__getattribute__(phase).__getattribute__(name)
-
+    def get_main_path(self):
+        """
+        Method to return the main directory where al experiments are saved.
+        :return: str, Main path
+        """
+        return self.main_dir
     def get_path(self, name):
         """ Get method tha returns the items inside the dictionary of paths
             Parameters:
@@ -152,7 +158,6 @@ class PathManager(object):
 
         """
         return self.dict_phase.__getattribute__(name)
-
     def exp_name_assignment(self):
 
         """ Function that auto enumerate experiment by existing folders on disk

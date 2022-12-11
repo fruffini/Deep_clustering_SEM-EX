@@ -35,6 +35,35 @@ Internal Validity Index Metrics ( NO-label-needed ) :
 
 """
 
+class Metrics_CCDC(object):
+    def __init__(self, opt, ids, labels_Patients):
+        self.initialized = False
+        self.opt = opt
+        self.labels_for_each_K = dict()
+        self.ids = ids
+        self.labels_Patients = labels_Patients
+
+
+
+    def add_new_Clustering_confiuration(self, labels_clusters):
+        self.labels_for_each_K["K_{0}".format(self.opt.num_clusters)] = labels_clusters
+        return self
+    def compute_CCDC(self):
+        """Computing Clustering"""
+        try:
+            assert self.labels_for_each_K.items().__len__()>1
+            C_ki = self.labels_for_each_K["K_{0}".format(self.opt.num_clusters - 1)] # the older cluster config
+            C_kf = self.labels_for_each_K["K_{0}".format(self.opt.num_clusters)]
+
+
+        except:
+            pass
+
+
+
+
+
+
 
 def metrics_unsupervised_CVI(Z_latent_samples, labels_clusters):
     """
@@ -54,12 +83,19 @@ def metrics_unsupervised_CVI(Z_latent_samples, labels_clusters):
             The resulting Davies-Bouldin score.
     ----------
     """
-    # 1) Silhouette_Score:
-    Si_score = silhouette_score(Z_latent_samples, labels_clusters)
-    # 2) Calinski_Harabasz_score:
-    CH_score = calinski_harabasz_score(Z_latent_samples, labels_clusters)
-    # 3) davies_bouldin_score:
-    DB_score = davies_bouldin_score(Z_latent_samples, labels_clusters)
+    try:
+        assert np.unique(labels_clusters).shape[0]>1
+        # 1) Silhouette_Score:
+        Si_score = silhouette_score(Z_latent_samples, labels_clusters)
+        # 2) Calinski_Harabasz_score:
+        CH_score = calinski_harabasz_score(Z_latent_samples, labels_clusters)
+        # 3) davies_bouldin_score:
+        DB_score = davies_bouldin_score(Z_latent_samples, labels_clusters)
+    except:
+        Si_score = 0
+        CH_score = 0
+        DB_score = 0
+        print('Exception launched from metric\'s evaluation task.')
     return {'avg_Si_score': Si_score, 'Calinski-Harabasz score': CH_score, 'Davies-Douldin score': DB_score}
 
 
@@ -77,8 +113,10 @@ def kmeans(model, dataloader, opt):
     km = KMeans(n_clusters=opt.num_clusters, n_init=100)
     output_array = None
     x_out = None
+    print('INFO : ---> Encoding Data on course...')
     for data in dataloader:
         model.set_input(data)
+        print(data)
         z_latent_batch = model.encode()  # pass batch of samples to the Encoder
         # ----------------------------------
         # Concatenate z latent samples and x samples together
@@ -88,11 +126,11 @@ def kmeans(model, dataloader, opt):
 
 
     # Fit k-means algorithm on concatenated samples and predict labels
-    print("Kmeans fitting on course")
+    print("INFO: ---> Kmeans fitting on course...")
     time_kmeans_0 = time.time()
     prediction = km.fit_predict(output_array)
     time_kmeans_f = time.time()
-    print("Kmeans fitted on data \n Time needed for fitting", (time_kmeans_f-time_kmeans_0)/60, '( min. )')
+    print("INFO: ---> Kmeans fitted on data \n Time needed for fitting", (time_kmeans_f-time_kmeans_0)/60, '( min. )')
     return x_out, km, prediction
 
 

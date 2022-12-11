@@ -5,10 +5,9 @@ from __future__ import print_function, division
 import sys
 import time
 import os
-
+from datetime import datetime
 import torch
 from tqdm import tqdm
-
 from util.util_path import get_next_run_id_local
 from options.train_options import TrainOptions
 from models import create_model
@@ -17,6 +16,7 @@ from dataset import create_dataset
 
 
 import numpy as np
+
 
 def pretrain():
     # ----- PRETRAIN ------
@@ -56,17 +56,22 @@ def train():
         epoch_start_time = time.time()  # timer for entire epoch
         epoch_iter = 0  # the total number of training iterations during a single epoch
         model.update_learning_rate() if not total_iters == 0 else model.do_nothing()  # update learning rates linked to optimizers.
+
+
+
+
         with tqdm(dataset.dataloader, unit="batch", desc="Progress bar training phase", disable=opt.verbose) as tqdm_train:
             for ind, data in enumerate(tqdm_train):
                 tqdm_train.set_description(f"Epoch {epoch}")
                 # inner loop within one epoch
                 if batch_iters % opt.update_interval == 0:
                     delta_bool = model.update_target(dataset.dataloader)
-                    opt.delta_count += 1 if delta_bool and epoch > 500 else 0
+                    opt.delta_count += 1 if delta_bool and epoch > opt.activation_delta else 0
 
                     model.print_metrics(epoch=epoch)
                     if total_iters > 0 and opt.delta_count>1 and not np.unique(model.y_prediction).__len__() <= 1 and epoch > 600:
                         print('\nReached tolerance threshold. Stopping training.\n', flush=False)
+                        model.save_networks('early_stopped')
                         exit_ = True
                         break
                     else:
@@ -86,12 +91,16 @@ def train():
                     model.save_image_reconstructed(epoch=epoch)
             model.print_current_losses(epoch=epoch, iters=epoch_iter)
             model.reset_accumulator()
-            print ('Training time for 1 epoch : ', (time.time() - epoch_start_time)/60, ' ( min )')
+            print ('Training time for 1 epoch : ', np.round((time.time() - epoch_start_time), 2), ' ( sec )')
+
+
+
             if exit_:
                 return
             else:
                 continue
-    model.save_networks(save_suffix)
+    model.save_networks('end_training')
+    print('INFO: training ended!')
 
 
 def iterative_training_over_k():
@@ -122,25 +131,37 @@ def iterative_training_over_k():
         #  _______________________________________________________________________________________________
         #  _______________________________________________________________________________________________
 
-sys.argv.extend([
+sys.argv.extend(
+        [
             '--phase', 'train',
-            '--AE_type', 'CAE3',
-            '--dataset_name', 'GLOBES',
-            '--reports_dir', 'C:\\Users\\Ruffi\\Desktop\\Deep_clustering_SEM-EX\\reports',
-            '--config_dir', 'C:\\Users\\Ruffi\\Desktop\\Deep_clustering_SEM-EX\\configs',
-            '--'
-            '--id_exp','ID3'
-        ])
+            '--dataset_name', 'GLOBES_2',
+            '--lr_policy','cosine-warmup',
+            '--reports_dir', '/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/reports',
+            '--config_dir', '/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/configs',
+            '--embedded_dimension', '256',
+            '--AE_type', 'CAE224',
+            '--gpu_ids','0,1',
+            '--id_exp','ID_GLOBES_2_1',
+            '--k_0', '2',
+            '--k_fin', '9',
+            '--shuffle_batches',
+            '--n_epochs','50',
+            '--n_epochs_decay','50'
+        ]
+    )
+
+#python train.py --id_exp ID_${dataset}_${ID} --phase pretrain --embedded_dimension=${emb} --dataset_name=${dataset} --n_epochs=25 --n_epochs_decay=25 --AE_type=${arch} --save_latest_freq=5000 --gpu_ids=${str_ids} --verbose --dataset_name=${dataset} --config_dir=${cof} --reports_dir=${rep} --shuffle_batches
+
 
 if __name__ == '__main__':
     #  _______________________________________________________________________________________________
     # System Settings
     # Put here debugging parametrization
     torch.backends.cudnn.benchmark = True
+    util_general.print_CUDA_info()
     sys.path.extend(["./"])
     # Seed everything
     util_general.seed_all()
-
     #  _______________________________________________________________________________________________
     # Experiment Options
     OptionstTrain = TrainOptions()
@@ -148,10 +169,15 @@ if __name__ == '__main__':
     #  _______________________________________________________________________________________________
     # Submit run:
     print("Submit run")
-    log_path = os.path.join(opt.reports_dir, 'log_run')
+    now = datetime.now()
+    date_time = now.strftime("%Y:%m:%d")
+
+    #------------------------------------------------------------------------------------------------
+    # ------------------------------------------------------------------------------------------------
+    log_path = os.path.join(opt.path_man.get_main_path(), 'log_run')
     run_id = get_next_run_id_local(os.path.join(log_path, opt.dataset_name), opt.phase)  # GET run id
-    run_name = "{0:05d}--{1}--EXP_{2}".format(run_id, opt.phase, opt.id_exp)
-    log_dir_exp = os.path.join(log_path, opt.dataset_name, run_name)
+    run_name = "{0:05d}--{1}--EXP_{2}--{3}".format(run_id, opt.phase, opt.id_exp, date_time)
+    log_dir_exp = os.path.join(log_path, run_name)
     util_general.mkdir(log_dir_exp)
     # Initialize Logger - run folder
     OptionstTrain.print_options(opt=opt, path_log_run=log_dir_exp)
@@ -169,18 +195,11 @@ if __name__ == '__main__':
     print("Hello!", date_time)
     print("Running path for the experiment:", os.getcwd())
     # Info CUDA
-    print("-------------------------INFO CUDA GPUs ----------------------------------")
-    print("Number of GPUs devices: ", torch.cuda.device_count())
-    print('CUDNN VERSION:', torch.backends.cudnn.version())
-    for device in range(torch.cuda.device_count()):
-        print("----DEVICE NUMBER : {%d} ----" % (device))
-        print('__CUDA Device Name:', torch.cuda.get_device_name(device))
-        print('__CUDA Device Total Memory [GB]:', torch.cuda.get_device_properties(device).total_memory / 1e9)
+    util_general.print_CUDA_info()
     #  _______________________________________________________________________________________________
     # Dataset Options
     dataset = create_dataset(opt)
     opt.dataset_size = dataset.__len__()
-
     #  _______________________________________________________________________________________________
     #  _______________________________________________________________________________________________
     #           ITERATIVE TRAINING / PRETRAINING

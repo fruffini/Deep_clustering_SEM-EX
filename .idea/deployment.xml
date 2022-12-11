@@ -3,6 +3,13 @@
   <component name="PublishConfigData" autoUpload="Always" serverName="soda@alvis1.c3se.chalmers.se:22 password" remoteFilesAllowedToDisappearOnAutoupload="false" confirmBeforeUploading="false" compareModeInSync="TEXT">
     <option name="confirmBeforeUploading" value="false" />
     <serverData>
+      <paths name="e3fruffi@10.139.15.113:22 password">
+        <serverdata>
+          <mappings>
+            <mapping local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
       <paths name="soda@alvis1.c3se.chalmers.se:22 password">
         <serverdata>
           <mappings>

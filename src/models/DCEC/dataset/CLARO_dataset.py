@@ -6,7 +6,7 @@ from easydict import EasyDict as edict
 import torch
 import numpy as np
 from PIL import Image
-import cv2
+
 import os
 import random
 import math
@@ -122,6 +122,7 @@ def loader(img_path, img_dim, box, clip, scale, convert_to_uint8, scale_by_255):
         img = get_box(img, box, perc_border=0.5)
     # Resize
     if img_dim != img.shape[0]:
+        import cv2
         img = cv2.resize(img, (img_dim, img_dim))
     # Clip
     if clip is not None:
@@ -171,14 +172,14 @@ class CLARODataset(BaseDataset):
         opt.img_shape = (self.config['data']['image_size'], self.config['data']['image_size'])
         self.root_dir = self.opt.data_dir
         self.raw_dir = os.path.join(self.root_dir, self.config['data']['raw_dir'])
-        self.interim_dir = os.path.join(self.root_dir, self.config['data']['interim_dir'])
-
+        self.interim_dir = os.path.join("/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/data", self.config['data']['interim_dir'])
         self.transform = transform
         # Upload info claro
         self.info_claro = pd.read_excel(os.path.join(self.interim_dir, self.config['data']['data_info']))
         # Upload raw_data.
         self.data = pd.read_excel(os.path.join(self.interim_dir, self.config['data']['box_file']), index_col="img ID", dtype=list)  # Data Patient ID-slicesID
-        if self.opt.box_apply is True:
+
+        if self.opt.box_apply:
             self.boxes = {os.path.basename(row[0]): eval(row[1][self.config['data']['box_value']]) for row in self.data.iterrows()}
         else:
             self.boxes = None
@@ -190,7 +191,6 @@ class CLARODataset(BaseDataset):
         self.convert_to_uint8 = self.config['data']['convert_to_uint8']
         self.scale_by_255 = scale_by_255
         print("Dataset CLARO ready for train!")
-
     @staticmethod
     def modify_commandline_options(parser, is_train):
         """Add new dataset-specific options, and rewrite default values for existing options.

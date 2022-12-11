@@ -340,3 +340,24 @@ def plot_metrics_unsupervised_K(file, save_dir):
         plt.clf()
         plt.close()
 
+def show_labeled_data(X_l_sel, select_label, ids_lab_sel, save_dir, file_name, number_to_plot=25):
+    import math
+    len_ = len(X_l_sel)
+    plt.clf()
+    number_to_plot = number_to_plot if not len_ <= number_to_plot else len_
+    if not len_ == 0:
+        step_ = len_ // number_to_plot
+        fig = plt.figure(figsize=(10, 10))
+        rows = math.ceil(math.sqrt(number_to_plot))
+        columns = math.ceil(math.sqrt(number_to_plot))
+        to_plot = np.arange(0, len_, step_)
+        fig.suptitle(f'Plotted Images for Label Selected = {select_label + 1}')
+        for i in range(0, number_to_plot):
+            fig.add_subplot(rows, columns, i + 1)
+            plt.imshow(X_l_sel[to_plot[i]], cmap='gray')
+            plt.axis('off')
+            plt.title(ids_lab_sel[to_plot[i]])
+        fig.savefig(os.path.join(save_dir, '{}_label_sel_{}___.png'.format(file_name, select_label + 1)))
+        plt.close(fig)
+    else:
+        print("Empty_CLuster")

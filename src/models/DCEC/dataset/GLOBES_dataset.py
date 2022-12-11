@@ -1,4 +1,3 @@
-from util import util_path
 from dataset import BaseDataset
 from options.base_options import BaseOptions
 from util.util_general import *
@@ -6,7 +5,6 @@ from easydict import EasyDict as edict
 import torch
 import numpy as np
 from PIL import Image
-import cv2
 import os
 import random
 import math
@@ -113,29 +111,16 @@ def normalize(img, convert_to_uint8, scale_by_255, min_val=None, max_val=None):
 
     return img
 
-def loader(img_path, img_dim, box, clip, scale, convert_to_uint8, scale_by_255):
+def loader(img_path, img_dim):
     # Img
     img = load_img(img_path)
 
-    # Select Box Area
-    if box is not None:
-        img = get_box(img, box, perc_border=0.5)
-    # Resize
     if img_dim != img.shape[0]:
         img = cv2.resize(img, (img_dim, img_dim))
-    # Clip
-    if clip is not None:
-        img = np.clip(img, clip['min'], clip['max'])
-
-    # Normalize
-    if scale is not None:
-        img = normalize(img, convert_to_uint8, scale_by_255, min_val=scale['min'], max_val=scale['max'])
-    else:
-        img = normalize(img, convert_to_uint8, scale_by_255)
 
     # To Tensor
     img = torch.from_numpy(img)
-    img  = img.unsqueeze(0)
+    img = img.unsqueeze(0)
     return img
 
 class GLOBESDataset(BaseDataset):
@@ -170,10 +155,18 @@ class GLOBESDataset(BaseDataset):
         self.interim_dir = os.path.join(self.root_dir, self.config['data']['interim_dir'])
         self.transform = transform
         # Upload raw_data.
-        self.data = pd.read_excel(os.path.join(self.interim_dir, self.config['data']['data_table']), index_col="img ID", dtype=list)  # Data Patient ID-slicesID
+        self.data = pd.read_excel(os.path.join(self.interim_dir, self.config['data']['data_table']), index_col="img ID", dtype=list)
+        # STOP FOR THE MOMENT
+        """if self.opt.shuffle_batches:
+            self.data = self.data.sample(frac=1, random_state=1)
+            with pd.ExcelWriter(os.path.join(self.interim_dir, self.config['data']['data_table'])) as writer:
+                self.data.to_excel(writer, sheet_name='Shuffle_data')
+        """
+
+        # Data Patient ID-slicesID
         self.convert_to_uint8 = self.config['data']['convert_to_uint8']
         self.scale_by_255 = scale_by_255
-        print("Dataset CLARO ready for train!")
+        print("Dataset GLOBES ready for train!")
 
     @staticmethod
     def modify_commandline_options(parser, is_train):
@@ -188,7 +181,7 @@ class GLOBESDataset(BaseDataset):
                 Returns:
                     the modified parser.
                 """
-        parser.add_argument('--data_dir', type=str, default='/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/src/models/DCEC/data', required=True, help='Input dataset directory, ./data default.')
+        parser.add_argument('--data_dir', type=str, default='/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/src/models/DCEC/data', help='Input dataset directory, ./data default.')
         return parser
 
     def set_transform(self, transform=None):
@@ -211,12 +204,9 @@ class GLOBESDataset(BaseDataset):
         row_name = row.name.split('_')
         img_id = row_name[1]
         patient_id = row_name[0]
-        # load box
-        box = self.boxes[patient_id + '_' + img_id] if self.boxes else None
         # Load data and get label
-        img_path = os.path.join(self.raw_dir, patient_id, "images", f"{patient_id + '_' + img_id}.tif")
-        x = loader(img_path=img_path, img_dim=self.config['data']['image_size'],
-                   box=box, clip=self.clip, scale=self.scale, convert_to_uint8=self.convert_to_uint8, scale_by_255=self.scale_by_255)
+        img_path = os.path.join(self.raw_dir, "images", patient_id,  f"{patient_id + '_' + img_id}.tif")
+        x = loader(img_path=img_path, img_dim=self.config['data']['image_size'])
         if self.transform is not None:
             x = self.transform(x)
         return x, patient_id, img_id

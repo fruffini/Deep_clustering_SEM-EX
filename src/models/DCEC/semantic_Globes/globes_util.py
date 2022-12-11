@@ -13,12 +13,15 @@ def create_spheres_limited_sovrapposition(opt, number_of_spheres):
                 boolean = True
                 center2 = sphere[1]
                 radius2 = sphere[0]
+                count = 0
                 while boolean:
+
                     total_dist = np.sqrt((center1[0] - center2[0]) ** 2 + (center1[1] - center2[1]) ** 2 + (center1[2] - center2[2]) ** 2)
-                    if radius1 + radius2 < total_dist or total_dist > (radius1 + radius2)//2:
+                    if radius1 + radius2 < total_dist or total_dist > (radius1 + radius2)//2 or count == opt.limit_rep:
                         boolean = False
                     elif total_dist < (radius1 + radius2)//2:
                         radius1, center1 = generation_sphere_random(radius_range=opt.radius_range, space_dim=opt.space_dim, original_space=opt.image_dim)
+                        count+=1
 
 
         spheres_dictionary['sphere_{0}'.format(j_center)] = tuple((radius1, center1))

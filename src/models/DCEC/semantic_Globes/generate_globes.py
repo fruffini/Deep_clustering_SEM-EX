@@ -22,9 +22,12 @@ def midpoints(x):
 
 sys.argv.extend(
         [
-            '--max_globes', '5',
-            '--radius_range', '[40,50]',
-            '--N_patients', '200'
+            '--max_globes', '3',
+            '--radius_range', '[60,70]',
+            '--N_patients', '200',
+            '--dataset_name', 'GLOBES_2',
+            '--surface_thickness', '2',
+            '--surface'
         ]
     )
 @click.command(context_settings=dict(help_option_names=['-h', '--help']))
@@ -33,13 +36,13 @@ sys.argv.extend(
 @click.option('--N_patients', help='Number of patients to generate',  type=int, default=10)
 @click.option('--max_globes', help='Number of internal globes inside the 3D images',  type=int, default=2)
 @click.option('--image_dim', help='3DImage dimensions, (img_dim, img_dim, img_dim) ',  type=int, default=224)
-@click.option('--radius_range',cls=util_general.ConvertStrToList, help='Radius intervals values',default=[])
-@click.option('--volume',  is_flag=True )
+@click.option('--radius_range',cls=util_general.ConvertStrToList, help='Radius intervals values', default=[])
+@click.option('--surface',  is_flag=True)
 @click.option('--surface_thickness', help='Number of pixels of surfaces\' thickness',  type=int, default=3)
 @click.option('--margin', help='Number of pixels of margin from the image borders',  type=int, default=5)
 @click.option('--sovrapposition', help='Max sovrapposition between spheres.', type=int, default=40)
 @click.option('--step_slicing', help='Slicing pixels steps.', type=int, default=2)
-
+@click.option('--limit_rep', help='Number of repetitive generation of globes', type=int, default=300)
 def main(**kwargs):
     opt = EasyDict(**kwargs)
 
@@ -100,7 +103,7 @@ def main(**kwargs):
             radius = sphere[0]
             center = tuple(sphere[1])
             sphere = globes_util.sphere((image_dim,) * 3, radius, center)
-            if not opt.volume:
+            if opt.surface:
                 sphere -= globes_util.sphere((image_dim,) * 3, radius - opt.surface_thickness, center)
             Volumetric_image += sphere
         Volumetric_image[Volumetric_image >= 1] = 1

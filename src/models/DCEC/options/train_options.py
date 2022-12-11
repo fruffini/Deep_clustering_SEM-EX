@@ -22,7 +22,7 @@ class TrainOptions(BaseOptions):
         parser.add_argument('--lr_pr', type=float, default=0.0002, help='initial learning rate for pretrain adam optimizer')
         parser.add_argument('--lr_tr', type=float, default=0.0002, help='initial learning rate for train adam optimizer')
         parser.add_argument('--lr_policy', type=str, default='linear', help='learning rate policy. [linear | step | '
-                                                                            'plateau | cosine]')
+                                                                            'plateau | cosine | cosine-warmup]')
         parser.add_argument('--beta1', type=float, default=0.5, help='momentum term of adam')
         parser.add_argument('--lr_decay_iters', type=int, default=50,
             help='multiply by a gamma every lr_decay_iters iterations')
