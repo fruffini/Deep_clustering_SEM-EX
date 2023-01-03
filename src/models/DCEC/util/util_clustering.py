@@ -4,7 +4,7 @@ import torch
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score, calinski_harabasz_score, davies_bouldin_score
 from sklearn.metrics.cluster import normalized_mutual_info_score as NMI
-
+from tqdm import tqdm
 
 """Unsupervised Metrics script
 
@@ -35,6 +35,7 @@ Internal Validity Index Metrics ( NO-label-needed ) :
 
 """
 
+
 class Metrics_CCDC(object):
     def __init__(self, opt, ids, labels_Patients):
         self.initialized = False
@@ -43,11 +44,10 @@ class Metrics_CCDC(object):
         self.ids = ids
         self.labels_Patients = labels_Patients
 
-
-
-    def add_new_Clustering_confiuration(self, labels_clusters):
+    def add_new_Clustering_configuration(self, labels_clusters):
         self.labels_for_each_K["K_{0}".format(self.opt.num_clusters)] = labels_clusters
         return self
+
     def compute_CCDC(self):
         """Computing Clustering"""
         try:
@@ -58,11 +58,6 @@ class Metrics_CCDC(object):
 
         except:
             pass
-
-
-
-
-
 
 
 def metrics_unsupervised_CVI(Z_latent_samples, labels_clusters):
@@ -104,7 +99,7 @@ def kmeans(model, dataloader, opt):
     K-means algorithm trained on samples represented Autoencoder latent space.
     Article: MacQueen, J. (1967). Classification and analysis of multivariate observations. In 5th Berkeley Symp. Math. Statist. Probability (pp. 281-297).
     link: https://www.cs.cmu.edu/~bhiksha/courses/mlsp.fall2010/class14/macqueen.pdf
-    :param model (<DCECmodel>):
+    :param model <BaseModel>: child class of the baseModel class.
     :param data: the same dataset used to pretrain the Autoencoder.
     :param opt (Option class): stores all the experiment flags; needs to be a subclass of BaseOptions
     :return: km (KMeans): returns the kmean algorithm trained on samples from dataloader represented in latent space.
@@ -114,21 +109,16 @@ def kmeans(model, dataloader, opt):
     output_array = None
     x_out = None
     print('INFO : ---> Encoding Data on course...')
-    for data in dataloader:
-        model.set_input(data)
-        print(data)
-        z_latent_batch = model.encode()  # pass batch of samples to the Encoder
-        # ----------------------------------
-        # Concatenate z latent samples and x samples together
-        x_out = np.concatenate((x_out, data[0]), 0) if x_out is not None else data[0]
-        output_array = np.concatenate((output_array, z_latent_batch.cpu().detach().numpy()), 0) if output_array is not None else z_latent_batch.cpu().detach().numpy()
-    # ----------------------------------
+    output = model.compute_encoded(dataloader=dataloader)
+    z_encoded_tot = output['z_latent']
+    x_out = output['x_out']
+
 
 
     # Fit k-means algorithm on concatenated samples and predict labels
     print("INFO: ---> Kmeans fitting on course...")
     time_kmeans_0 = time.time()
-    prediction = km.fit_predict(output_array)
+    prediction = km.fit_predict(z_encoded_tot)
     time_kmeans_f = time.time()
     print("INFO: ---> Kmeans fitted on data \n Time needed for fitting", (time_kmeans_f-time_kmeans_0)/60, '( min. )')
     return x_out, km, prediction

@@ -270,6 +270,7 @@ class _TreeGenerator:
     def _add_file(self, file, prefix, connector):
         self._tree.append(f"{prefix}{connector} {file.name}")
 # ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 def find_last_exp(path_log_run:str, MODE):
     if MODE == 'last':
         import re
@@ -278,10 +279,11 @@ def find_last_exp(path_log_run:str, MODE):
         path_ext = LIST_EXPS[numpy.argmax([float(exp[0]) for exp in LIST_EXPS])][1]
         return os.path.join(path_log_run, path_ext)
 
+
 def generate_id_for_multi_exps(run_dir_root: str):
     """Reads all directory names in a given directory (non-recursive) and returns the next (increasing) run id. Assumes IDs are numbers at the start of the directory names."""
     import re
-    ids= [d.split('--')[0]for d in os.listdir(run_dir_root)]
+    ids = [d.split('--')[0]for d in os.listdir(run_dir_root)]
     r = re.compile("^\\d+")
     run_id=1
     for id in ids:
@@ -290,6 +292,7 @@ def generate_id_for_multi_exps(run_dir_root: str):
             i = int(m.group())
             run_id = max(1, i + 1)
     return run_id
+
 def get_next_run_id_local(run_dir_root: str, module_name: str) -> int:
     """Reads all directory names in a given directory (non-recursive) and returns the next (increasing) run id. Assumes IDs are numbers at the start of the directory names."""
     import re

@@ -116,7 +116,7 @@ def loader(img_path, img_dim):
     img = load_img(img_path)
 
     if img_dim != img.shape[0]:
-        img = cv2.resize(img, (img_dim, img_dim))
+        img = np.resize(img, (img_dim, img_dim))
 
     # To Tensor
     img = torch.from_numpy(img)
@@ -155,13 +155,13 @@ class GLOBESDataset(BaseDataset):
         self.interim_dir = os.path.join(self.root_dir, self.config['data']['interim_dir'])
         self.transform = transform
         # Upload raw_data.
-        self.data = pd.read_excel(os.path.join(self.interim_dir, self.config['data']['data_table']), index_col="img ID", dtype=list)
-        # STOP FOR THE MOMENT
-        """if self.opt.shuffle_batches:
-            self.data = self.data.sample(frac=1, random_state=1)
-            with pd.ExcelWriter(os.path.join(self.interim_dir, self.config['data']['data_table'])) as writer:
-                self.data.to_excel(writer, sheet_name='Shuffle_data')
-        """
+        self.data = pd.read_excel(os.path.join(self.interim_dir, self.config.data.data_table), index_col="img ID", dtype=list)
+
+        # select a sub sample from the dataset Globes
+        self.data = self.data[:np.int(np.floor(self.opt.perc * (len(self.data))))]
+
+        # Select a subset of the data:
+        index = np.floor(opt.perc * (len(self.data)))
 
         # Data Patient ID-slicesID
         self.convert_to_uint8 = self.config['data']['convert_to_uint8']
@@ -182,6 +182,10 @@ class GLOBESDataset(BaseDataset):
                     the modified parser.
                 """
         parser.add_argument('--data_dir', type=str, default='/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/src/models/DCEC/data', help='Input dataset directory, ./data default.')
+        parser.add_argument('--perc', type=float, default=1.0, help='Percentage of dataset')
+        parser.add_argument('--image_shape', type=int, default=224, help='image dimension')
+        parser.add_argument('--shuffle_interval', type=int, default=0, help='shuffle epochs interval')
+
         return parser
 
     def set_transform(self, transform=None):
@@ -210,6 +214,7 @@ class GLOBESDataset(BaseDataset):
         if self.transform is not None:
             x = self.transform(x)
         return x, patient_id, img_id
+
     def __repr__(self):
         fmt_str = 'Dataset ' + self.__class__.__name__ + '\n'
         fmt_str += '    Number of datapoints: {}\n'.format(self.__len__())

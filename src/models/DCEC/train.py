@@ -21,11 +21,13 @@ import numpy as np
 def pretrain():
     # ----- PRETRAIN ------
     total_iters = 0  # the total number of training iterations
+    opt.save_latest_freq = opt.batch_size * np.ceil(opt.save_latest_freq / opt.batch_size)
+
     for epoch in range(opt.epoch_count, opt.n_epochs + opt.n_epochs_decay + 1):  # outer loop for different epochs
         # Train the model for each value inside the k_values option list
         epoch_iter = 0
         model.update_learning_rate() if not total_iters == 0 else model.do_nothing()  # update learning rates linked to optimizer,
-        with tqdm(dataset.dataloader, unit="batch", desc="Progress bar pretraining phase", disable=opt.verbose) as tqdm_pret:
+        with tqdm(dataset.dataloader, unit="batch", desc="Progress bar pretraining phase") as tqdm_pret:
             for i, data in enumerate(tqdm_pret):
                 tqdm_pret.set_description(f"Epoch {epoch}")
                 # inner loop within one epoch
@@ -47,58 +49,59 @@ def pretrain():
 def train():
     # ----- TRAIN ------
     # starting procedure for training
-    model.prepare_training(dataloader=dataset.dataloader)
+    model.prepare_training(dataset=dataset)
     exit_ = False  # training exit condition
     total_iters = 0  # the total number of training iterations
     batch_iters = 0  # the total number of batch processed
+    epoch_counter = 0
+    updated_target = False
     for epoch in range(opt.epoch_count, opt.n_epochs + opt.n_epochs_decay + 1):  # outer loop for different epochs
+
+        if epoch_counter % opt.shuffle_interval == 0 and opt.shuffle_interval != 0:
+            dataset.shuffle_data()
+            delta_bool = model.update_target(dataloader = dataset.dataloader_big_batch, indexing=dataset.get_new_indexig())
+            updated_target = True
+            epoch_counter = 0
+
         # Train the model for each value inside the k_values option list
         epoch_start_time = time.time()  # timer for entire epoch
         epoch_iter = 0  # the total number of training iterations during a single epoch
         model.update_learning_rate() if not total_iters == 0 else model.do_nothing()  # update learning rates linked to optimizers.
 
+        for ind, data in enumerate(dataset.dataloader):
+            # inner loop within one epoch
+            if updated_target:
+                model.print_metrics(epoch=epoch)
+                updated_target = False
+                if total_iters > 0 and delta_bool and not np.unique(model.y_prediction).__len__() == 1 and epoch > opt.activation_delta:
+                    print('\n Reached tolerance threshold. Stopping training.\n', flush=False)
+                    model.save_networks('early_stopped')
+                    exit_ = True
+                    break
+                else:
+                    print('\nTolerance on labels difference beetween %s iteration not respected. Continue Training...\n' %(opt.update_interval), flush=False)
+            total_iters += opt.batch_size
+            epoch_iter += opt.batch_size
+            batch_iters += 1
+            model.set_input(data)  # Unpack data from dataset in q_ij set and apply preprocessing
+            model.set_target_p_batch(ind=ind)
+            model.optimize_parameters()
+            # Accumulate all losses value
+            model.accumulate_losses()  # accumulate losses in a dictionary
 
-
-
-        with tqdm(dataset.dataloader, unit="batch", desc="Progress bar training phase", disable=opt.verbose) as tqdm_train:
-            for ind, data in enumerate(tqdm_train):
-                tqdm_train.set_description(f"Epoch {epoch}")
-                # inner loop within one epoch
-                if batch_iters % opt.update_interval == 0:
-                    delta_bool = model.update_target(dataset.dataloader)
-                    opt.delta_count += 1 if delta_bool and epoch > opt.activation_delta else 0
-
-                    model.print_metrics(epoch=epoch)
-                    if total_iters > 0 and opt.delta_count>1 and not np.unique(model.y_prediction).__len__() <= 1 and epoch > 600:
-                        print('\nReached tolerance threshold. Stopping training.\n', flush=False)
-                        model.save_networks('early_stopped')
-                        exit_ = True
-                        break
-                    else:
-                        print('\nTolerance on labels difference beetween %s iteration not respected. Continue Training...\n' %(opt.update_interval), flush=False)
-                total_iters += opt.batch_size
-                epoch_iter += opt.batch_size
-                batch_iters += 1
-                model.set_input(data)  # Unpack data from dataset in q_ij set and apply preprocessing
-                model.set_target_p_batch(ind=ind)
-                model.optimize_parameters()
-                # Accumulate all losses value
-                model.accumulate_losses()  # accumulate losses in a dictionary
-                if total_iters % opt.save_latest_freq == 0:  # cache our latest model every <save_latest_freq> iterations
-                    print('saving the latest model (epoch %d, total_iters %d)' % (epoch, total_iters), )
-                    save_suffix = 'iter_%d_epoch_%d' % (total_iters, epoch) if opt.save_by_iter else 'latest'
-                    model.save_networks(save_suffix)
-                    model.save_image_reconstructed(epoch=epoch)
-            model.print_current_losses(epoch=epoch, iters=epoch_iter)
-            model.reset_accumulator()
-            print ('Training time for 1 epoch : ', np.round((time.time() - epoch_start_time), 2), ' ( sec )')
-
-
-
-            if exit_:
-                return
-            else:
-                continue
+            if total_iters % opt.save_latest_freq == 0:  # cache our latest model every <save_latest_freq> iterations
+                print('saving the latest model (epoch %d, total_iters %d)' % (epoch, total_iters), )
+                save_suffix = 'iter_%d_epoch_%d' % (total_iters, epoch) if opt.save_by_iter else 'latest'
+                model.save_networks(save_suffix)
+                model.save_image_reconstructed(epoch=epoch)
+        model.print_current_losses(epoch=epoch, iters=epoch_iter)
+        model.reset_accumulator()
+        epoch_counter += 1
+        print('Training time for 1 epoch : ', np.round((time.time() - epoch_start_time), 2), ' ( sec )')
+        if exit_:
+            return
+        else:
+            continue
     model.save_networks('end_training')
     print('INFO: training ended!')
 
@@ -110,9 +113,11 @@ def iterative_training_over_k():
     global model
     for k in np.arange(opt.k_0, opt.k_fin + 1):  # outer loop for different model instanced with different cluster number intialization MODEL_k -> MODEL_k+1
         #  _______________________________________________________________________________________________
-        print(f"\n _______________________________________________________________________________________________ "
-              f"\n INFORMATION: the current number of clusters is {k} "
-              f"\n _______________________________________________________________________________________________")
+
+        print("".center(100, '_'))
+        print(f" INFORMATION: the current number of clusters is {k}  ".center(100, '_'))
+        print("".center(100, '_'))
+
         #  _______________________________________________________________________________________________
         # Model selection and setup
         opt.num_clusters = k  # set the number of clusters.
@@ -120,40 +125,74 @@ def iterative_training_over_k():
         model.setup(opt=opt)
         if model.load_model_pretrained():
             train()  # train function.
-            print(
-                f"\n _______________________________________________________________________________________________ "
-                f"\n INFORMATION: the DCEC model with the number of clusters equal to {k} has been trained.  "
-                f"\n _______________________________________________________________________________________________"
-                )
+            print("".center(100, '_'))
+            print(" INFORMATION: the DCEC model with the number of clusters equal to {k} has been trained ".center(100, '_'))
+            print("".center(100, '_'))
         else:
             raise NotImplementedError(" Pretrained weights not implemented, please launch experiment with --phase <pretrain>")
 
         #  _______________________________________________________________________________________________
         #  _______________________________________________________________________________________________
 
-sys.argv.extend(
+
+def debugging_only():
+    """ This function is called only if in the DEBUG modality of Pycharm """
+
+    print("".center(100, '°'))
+    print(" DEBUG MODALITY ".center(100, '°'))
+    print("".center(100, '°'))
+
+    sys.argv.extend(
         [
+            '--workdir', '/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX',
             '--phase', 'train',
             '--dataset_name', 'GLOBES_2',
-            '--lr_policy','cosine-warmup',
-            '--reports_dir', '/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/reports',
+
+            '--lr_policy', 'cosine-warmup',
+            '--reports_dir','/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/reports',
             '--config_dir', '/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/configs',
-            '--embedded_dimension', '256',
+            '--embedded_dimension', '64',
             '--AE_type', 'CAE224',
-            '--gpu_ids','0,1',
-            '--id_exp','ID_GLOBES_2_1',
+            '--gpu_ids', '3',
+            '--id_exp', 'ID_1',
             '--k_0', '2',
-            '--k_fin', '9',
-            '--shuffle_batches',
-            '--n_epochs','50',
-            '--n_epochs_decay','50'
+            '--k_fin', '15',
+            '--n_epochs', '100',
+            '--perc', '0.1',
+            '--n_epochs_decay', '100',
+            '--num_threads', '4',
+            '--experiment_name', 'debug',
+            '--shuffle_interval', '10',
+            '--verbose',
+            '--batch_size', '16',
+            '--lr_tr', '0.001'
         ]
     )
+    # CLARO DEBUGGER
+    # '--data_dir', '/mimer/NOBACKUP/groups/snic2022-5-277/ltronchin/data',
+    # '--box_apply',
 
-#python train.py --id_exp ID_${dataset}_${ID} --phase pretrain --embedded_dimension=${emb} --dataset_name=${dataset} --n_epochs=25 --n_epochs_decay=25 --AE_type=${arch} --save_latest_freq=5000 --gpu_ids=${str_ids} --verbose --dataset_name=${dataset} --config_dir=${cof} --reports_dir=${rep} --shuffle_batches
-
-
+def running():
+    print("".center(100, '*'))
+    print(" RUNNING CODE ".center(100, '*'))
+    print("".center(100, '*'))
 if __name__ == '__main__':
+    """
+    Detecting if you're in the PyCharm debugger or not
+    If you put a breakpoint HERE and look at the callstack you will 
+    see the entry point is in 'pydevd.py'
+    In debug mode, it copies off sys.argv: "sys.original_argv = sys.argv[:]"
+    We abuse this knowledge to test for the PyCharm debugger.
+    """
+    if util_general.is_debug():
+        running = debugging_only
+    running()
+
+
+
+
+
+
     #  _______________________________________________________________________________________________
     # System Settings
     # Put here debugging parametrization
@@ -166,17 +205,20 @@ if __name__ == '__main__':
     # Experiment Options
     OptionstTrain = TrainOptions()
     opt = OptionstTrain.parse()
+
+    # Change the working directory
+    os.chdir(opt.workdir)
+
     #  _______________________________________________________________________________________________
     # Submit run:
     print("Submit run")
     now = datetime.now()
-    date_time = now.strftime("%Y:%m:%d")
+    date_time = now.strftime("%Y_%m_%d")
 
-    #------------------------------------------------------------------------------------------------
     # ------------------------------------------------------------------------------------------------
     log_path = os.path.join(opt.path_man.get_main_path(), 'log_run')
     run_id = get_next_run_id_local(os.path.join(log_path, opt.dataset_name), opt.phase)  # GET run id
-    run_name = "{0:05d}--{1}--EXP_{2}--{3}".format(run_id, opt.phase, opt.id_exp, date_time)
+    run_name = "{0:05d}_{1}_EXP_{2}_{3}".format(run_id, opt.phase, opt.id_exp, date_time)
     log_dir_exp = os.path.join(log_path, run_name)
     util_general.mkdir(log_dir_exp)
     # Initialize Logger - run folder
@@ -194,8 +236,6 @@ if __name__ == '__main__':
     date_time = now.strftime("%d/%m/%Y, %H:%M:%S")
     print("Hello!", date_time)
     print("Running path for the experiment:", os.getcwd())
-    # Info CUDA
-    util_general.print_CUDA_info()
     #  _______________________________________________________________________________________________
     # Dataset Options
     dataset = create_dataset(opt)

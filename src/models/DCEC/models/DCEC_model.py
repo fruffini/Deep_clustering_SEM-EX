@@ -9,7 +9,7 @@ from util import util_general
 from util.util_clustering import kmeans, metrics_unsupervised_CVI
 from .base_model import BaseModel
 from .networks import *
-
+import h5py
 torch.autograd.set_detect_anomaly(True)
 
 
@@ -203,7 +203,7 @@ class DCECModel(BaseModel):
             img = np.array(image.detach().cpu())
             img = 255.0 * img
             img = img.astype(np.uint8)
-            img = Image.fromarray(img[0,:,:])
+            img = Image.fromarray(img[0, :, :])
             if self.opt.dataset_name =='GLOBES':
                 img.save(
                     fp=os.path.join(path_epoch, f"model_{self.__class__.__name__}_rec_IMG_epoch_{epoch}_IDpatient_{self.y_batch[i]}_{self.id_batch[i]}.tif")
@@ -230,8 +230,13 @@ class DCECModel(BaseModel):
             for v in computed_metrics.values():
                 message += ','
                 message += '%.3f ' % (v)
+            print("".center(100, '|'))
+            print(" Printing Metrics ".center(100, '|'))
 
-            print(message) if self.opt.verbose else self.do_nothing()  # print the message
+            print("1) Average SI score", computed_metrics['avg_Si_score'], '\n',
+                  "2) Calinski-Harabasz Score", computed_metrics['Calinski-Harabasz score'], '\n',
+                  "3) 'Davies-Bouldin score'", computed_metrics['Davies-Douldin score'], '\n') if self.opt.verbose else self.do_nothing()  # print the message
+            print("".center(100, '|'))
             with open(self.log_metrics, "a") as log_file:
                 log_file.write('\n%s' % message)  # save the message
         else:
@@ -244,12 +249,18 @@ class DCECModel(BaseModel):
             iters (int) -- current training iteration during this epoch (reset to 0 at the end of every epoch)
             losses (OrderedDict) -- training losses stored in the format of (name, float) pairs
         """
+        print_message = 'EPOCH : %d  ; ' % (epoch)
+        for k, v in self.acc_losses.items():
+            print_message += f"{k} : %.3f  ; " % (self.opt.gamma * (np.sum(v) / (iters / self.opt.batch_size))) if k == 'KL' else f"{k} : %.3f  ; " % (
+                        1.0 * (np.sum(v) / (iters / self.opt.batch_size)))
+        print("".center(100, '*'))
+        print(print_message[:-2])
         message = str(epoch)
-        for v in self.acc_losses.values():
+        for k, v in self.acc_losses.items():
             message += ','
-            message += '%.3f ' % (np.sum(v)/(iters/self.opt.batch_size))
-        print(self.opt.verbose)
-        print(message) # print the message
+            message += '%.3f ' % (self.opt.gamma * (np.sum(v) / (iters / self.opt.batch_size))) if k == 'KL' else '%.3f ' % (
+                        1.0 * (np.sum(v) / (iters / self.opt.batch_size)))
+        # print the message
         with open(self.log_losses, "a") as log_file:
             log_file.write('\n%s' % message)  # save the message
 
@@ -300,19 +311,27 @@ class DCECModel(BaseModel):
             labels_y = q_ij.argmax(1).detach().cpu()  # selecting labels
             return [labels_y, q_ij.detach().cpu()]
 
-    def save_actual_labels(self, dictionary_data):
-
+    def save_actual_labels(self, dictionary_data, Dataset_z, Dataset_qij):
+        print("".center(100, '|'))
+        print(" Saving of clusters labels file ".center(100, '|'))
+        print("".center(100, '|'))
         # Creation of the labels directory
-        labels_file = os.path.join(self.opt.path_man.get_path('labels_dir'), 'data_clusterslabels_K_%s_.xlsx' %format(str(self.opt.num_clusters)))
+        labels_file = os.path.join(self.opt.path_man.get_path('labels_dir'), 'data_clusters_labels_K_%s_.xlsx' %format(str(self.opt.num_clusters)))
         data = pd.DataFrame.from_dict(dictionary_data)
+        data.set_index('img ID')
         with pd.ExcelWriter(labels_file) as writer:
             data.to_excel(writer, sheet_name='Data_complete')
-            print('Data Saved')
 
 
+        # Datasets Directory
+        Datasets_file = os.path.join(self.opt.path_man.get_path('labels_dir'),'datasets_z_q_K_%s'%format(str(self.opt.num_clusters)) )
+        np.savez_compressed(Datasets_file, Z_dataset=Dataset_z, Q_Dataset=Dataset_qij)
+        print('Information and Datasets have been saved as .xlxs and .npz files in labels directory: ', self.opt.path_man.get_path('labels_dir'))
 
+        print("".center(100, '|'))
+        print("".center(100, '|'))
 
-    def update_target(self, dataloader):
+    def update_target(self, dataloader, indexing):
         """Update target probability every # train iterations
         Returns:
             delta_label (float): is the label assignment difference between a fixed interval of training iterations. I's a float if the delta label parmeter is set not equal to zero, mean
@@ -321,24 +340,54 @@ class DCECModel(BaseModel):
         with torch.no_grad():
             output = self.compute_encoded(dataloader=dataloader)
             self.z_encoded_tot = output['z_latent']
-            q_ij = self.netCL(self.z_encoded_tot)  # probabilities computed for each samples to belong to each n_clusters.
-            self.target_prob = target_distribution(q_ij=q_ij)  # set target distribution
-            y_pred = q_ij.argmax(1).detach().cpu()  # selecting labels
+            self.x_tot = output['x_out']
+            # probabilities computed for each samples to belong to each n_clusters.
 
-            self.save_actual_labels(dictionary_data = {'patient_id': output['id'], 'image_id': output['image_id'], 'clusters_labels': list(y_pred)})
-            print(f' The list of unique labels assigned {np.unique(np.array(y_pred))}')
+            q_ij = self.netCL(self.z_encoded_tot)
+
+            self.target_prob = target_distribution(q_ij=q_ij)  # set target distribution
+
+            # Predictions labels for each sample
+
+            y_pred = q_ij.argmax(1).detach().cpu().numpy()
+
+            # Dictionary to save
+            dict_to_save = {
+                'img ID': [id + '_' + img_id for id, img_id in zip(output['id_patient'], output['image_id'])],
+                'patient ID': output['id_patient'],
+                'image_id': output['image_id'],
+                'clusters_labels': list(y_pred)}
+            # Datasets to save
+            Datasets = {
+                        'Dataset_z': self.z_encoded_tot.numpy().copy(),
+                        'Dataset_qij': q_ij.detach().cpu().numpy()
+                        }
+
+            # Save the Excel file for data with labels
+
+            self.save_actual_labels(dictionary_data=dict_to_save, **Datasets)
+            uniques, counts = np.unique(np.array(y_pred), return_counts=True)
+            print("".center(100, '|'))
+            print(" CLUSTERING INFORMATIONS ".center(100, '|'))
+            print(f' 1) The list of unique labels assigned: {uniques} \n '
+                  f' 2) Uniques distribution:  {counts}')
+            # For the first updating the labels are given by k-means fitting algorithm
             y_pred_last = np.copy(self.y_prediction)
-            self.y_prediction = np.copy(y_pred)  # set the new labels assignment
+            # Setting of the new labels assigned to samples
+            self.y_prediction = np.copy(y_pred)
             # check stop criterion
             if self.opt.delta_check:
                 # Check stop condition if the parameter is set in option.
-                delta_label = np.sum(np.array(y_pred.data) != y_pred_last).astype(np.float32) / \
+                y_pred_last = y_pred_last[indexing[0]]
+                delta_label = np.sum(np.array(y_pred) != y_pred_last).astype(np.float32) / \
                               y_pred.shape[0]
-                print("\n Delta label is : ", delta_label)
+                print(
+                      "3) Delta label is : ", delta_label)
+
+                print("".center(100, '|'))
                 return delta_label < self.opt.delta_label
             else:
-                self.y_prediction = np.copy(y_pred)
-                return None
+                return False
 
     def set_pretrain_folders(self):
         """Set the pretrain folders in the path manager."""
@@ -349,7 +398,7 @@ class DCECModel(BaseModel):
 
     def load_model_pretrained(self):
         """Ths function guarantees to load the weights pretrained for Encoder and Decoder"""
-        load_suffix = 'iter_%s' % (str(self.opt.load_iter)) if self.opt.load_iter >0 else 'latest'
+        load_suffix = 'iter_%s' % (str(self.opt.load_iter)) if self.opt.load_iter > 0 else 'latest'
         return self.load_networks(epoch=load_suffix, path_ext=self.get_path_phase("weights_dir", phase="pretrain"))
 
     def load_model_trained(self):
@@ -358,33 +407,40 @@ class DCECModel(BaseModel):
         return self.load_networks(epoch=load_suffix, path_ext=self.get_path_phase("weights_dir", phase="train"))
 
     def compute_encoded(self, dataloader):
+        import time
         x_out = None
         y_out = None
+        id_out = None
         z_latent_out = None
         print('INFO: encoding all data on course...')
-        with torch.no_grad():
-            with tqdm(dataloader, unit="batch", desc="Progress bar ENCODING DATA...", disable=self.opt.verbose) as tqdm_encoding:
-                for data in tqdm_encoding:
-                    self.set_input(data)
-                    z_latent_batch = self.encode()  # pass batch of samples to the Encoder
-                    # ----------------------------------
-                    # Concatenate z latent samples and x samples together
-                    x_out = np.concatenate((x_out, data[0]), 0) if x_out is not None else data[0]
-                    y_out = np.concatenate((y_out, data[1]), 0) if y_out is not None else data[1]
-                    id_out = np.concatenate((y_out, data[1]), 0) if y_out is not None else data[1]
-                    z_latent_out = np.concatenate((z_latent_out, z_latent_batch.cpu().detach().numpy()), 0) if z_latent_out is not None else z_latent_batch.cpu().detach().numpy()
+        time_0 = time.time()
+        time_f = time.time()
+        with tqdm(dataloader, unit="batch", desc="Progress bar ENCODING DATA...") as tqdm_encoding:
+            for data in tqdm_encoding:
+                self.set_input(data)
 
+                z_latent_batch = self.netE(self.x_batch)  # pass batch of samples to the Encoder
+                print(torch.cuda.current_device())
+                print(
+                    "Outside: input size", self.x_batch.device,
+                    "output_size", z_latent_batch.device
+                )
+                # ----------------------------------
+                # Concatenate z latent samples and x samples together
+                x_out = np.concatenate((x_out, data[0]), 0) if x_out is not None else data[0]
+                y_out = np.concatenate((y_out, data[1]), 0) if y_out is not None else data[1]
+                id_out = np.concatenate((id_out, data[2]), 0) if id_out is not None else data[2] if len(data)>1 else None
+                z_latent_out = np.concatenate((z_latent_out, z_latent_batch.cpu().detach().numpy()), 0) if z_latent_out is not None else z_latent_batch.cpu().detach().numpy()
+        print("INFO: ---> Encoding done in : ", (time_f - time_0) / 60, '( min. )')
+        return {'id_patient': list(y_out), 'z_latent': torch.from_numpy(z_latent_out), 'x_out': torch.from_numpy(x_out), 'image_id': list(id_out)} if len(data)>1 else {'y_out': list(y_out), 'z_latent': torch.from_numpy(z_latent_out), 'x_out': list(x_out)}
 
-        print('INFO: encoding done!')
-        return {'id': list(y_out), 'z_latent': torch.from_numpy(z_latent_out), 'x_out': list(x_out), 'image_id': list(id_out)}
-
-    def prepare_training(self, dataloader):
+    def prepare_training(self, dataset):
         """Procedure to start the training of Deep Convolutional Embeddings Clustering model
         i) Initialize clusters centers with KMEANS clustering algorithm.
         ii) extract clusters centers from fitted kmeans and put them in to <ClusteringLayer>.
         """
         # i) Fitting clusters centers with k-means
-        self.x_tot, self.kmeans, self.y_prediction = kmeans(model=self, dataloader=dataloader, opt=self.opt)
+        self.x_tot, self.kmeans, self.y_prediction = kmeans(model=self, dataloader=dataset.dataloader_big_batch, opt=self.opt)
         # ii) Set the centers parameters in the ClusteringLayer Module
         cluster_centers = torch.tensor(self.kmeans.cluster_centers_, dtype=torch.float, requires_grad=True)
         # ADD clusters parameters in DCEC:
@@ -394,7 +450,8 @@ class DCECModel(BaseModel):
         # ______________________________________________________________________________________________________________
         #  Change folders
         self.setup(opt=self.opt)  # reconfigure optimizers
-        self.opt.path_man.set_dir(dir_to_extend='DCECModel_2_dir', path_ext='labels', name_att='labels')
+        # creation of the labels directory in each models savings path
+        self.opt.path_man.set_dir(dir_to_extend=f'DCECModel_{self.opt.num_clusters}_dir', path_ext='labels', name_att='labels')
         self.opt.path_man.change_phase(self.opt.phase)  # change phase dictionary for reference
     def forward(self):
         """Run forward pass train/pretrain"""

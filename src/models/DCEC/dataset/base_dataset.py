@@ -1,9 +1,6 @@
 """This module implements an abstract class ABC 'BaseDataset for datasets"""
-import random
 from abc import ABC, abstractmethod
-
 import torch.utils.data as data
-from numba.core.types import abstract
 
 
 class BaseDataset(data.Dataset, ABC):
@@ -22,6 +19,7 @@ class BaseDataset(data.Dataset, ABC):
             opt (Option class)-- stores all the experiments flags; subclass of BaseOptions
         """
         self.opt = opt
+        self.data = None
 
     @staticmethod
     def modify_commandline_options(parser, is_train):
@@ -35,6 +33,10 @@ class BaseDataset(data.Dataset, ABC):
         Returns:
             the modified parser.
         """
+
+
+
+
         return parser
     @abstractmethod
     def __len__(self):
@@ -52,4 +54,6 @@ class BaseDataset(data.Dataset, ABC):
             a dictionary of data with their names. It ususally contains the data itself and its metadata information.
         """
         pass
+
+
 

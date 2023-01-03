@@ -1,9 +1,10 @@
 import importlib
-
+import copy
 import easydict
 from torch.utils.data import Subset
 import numpy as np
 import torch
+import os
 from .base_dataset import BaseDataset
 def find_dataset_using_name(dataset_name):
     """Import the module "data/[dataset_name]_dataset.py".
@@ -65,26 +66,58 @@ class CustomDatasetDataLoader():
         print("INFO: dataset [%s] was created" % type(self.dataset).__name__)
         self.split_train = 0.9
 
+        # ADD a column to track the original order of the dataset
+        self.df_data = self.dataset.data
+        dict_mapper = {id: i for i, id in enumerate(self.df_data.index)}
+        indexing = self.df_data.index.map(dict_mapper)
+        self.df_data.insert(2, "index_number", list(indexing))
+        self.dataset.data = self.df_data
+        # indexing saved
         self.create_datasets_splitted()
-
         self.dataloader = torch.utils.data.DataLoader(
             self.dataset, batch_size=opt.batch_size,
             shuffle=opt.shuffle_batches,
             num_workers=int(opt.num_threads))
+        self.dataloader_big_batch = torch.utils.data.DataLoader(
+            self.dataset, batch_size=256,
+            shuffle=False,
+            num_workers=int(self.opt.num_threads)
+        )
 
+    def get_new_indexig(self):
+        return np.array(self.dataset.data['index_number']), self.dataset.data['index_number']
+
+    def shuffle_data(self):
+
+        self.dataset.data = self.dataset.data.sample(frac=1, random_state=int(os.environ['PYTHONHASHSEED']))
+        self.df_data = self.dataset.data
+        self.dataloader = torch.utils.data.DataLoader(
+            self.dataset, batch_size=self.opt.batch_size,
+            shuffle=False,
+            num_workers=int(self.opt.num_threads))
+        self.dataloader_big_batch = torch.utils.data.DataLoader(
+            self.dataset, batch_size=256,
+            shuffle=False,
+            num_workers=int(self.opt.num_threads))
     def create_datasets_splitted(self):
 
         # Variables needed for the splitting
         original_dataset_len = len(self.dataset)
         n_tr_samples = original_dataset_len*self.split_train *100 // 100
         train_subset = Subset(self.dataset, np.arange(0, n_tr_samples))
-        val_subset = Subset(self.dataset, np.arange(n_tr_samples, original_dataset_len))
+        test_subset = Subset(self.dataset, np.arange(n_tr_samples, original_dataset_len))
+        # Dataframe organizations
+        DF_train = None
+        DF_test = None
+        if self.opt.dataset_name != 'MNIST':
+            DF_train = self.dataset.data.iloc[train_subset.indices]
+            DF_val = self.dataset.data.iloc[test_subset.indices]
 
         self.datasets_splitted = easydict.EasyDict(
             {'train':
                 {
                     'dataset': train_subset,
-                    'DataFrame': self.dataset.data.iloc[train_subset.indices],
+                    'DataFrame': DF_train ,
                     'dataloader': torch.utils.data.DataLoader(train_subset,
                                                               batch_size=self.opt.batch_size,
                                                               shuffle=self.opt.shuffle_batches,
@@ -92,12 +125,13 @@ class CustomDatasetDataLoader():
                 },
              'val':
                 {
-                    'dataset': val_subset,
-                    'DataFrame': self.dataset.data.iloc[val_subset.indices],
+                    'dataset': test_subset,
+                    'DataFrame': DF_test,
                     'dataloader': torch.utils.data.DataLoader(train_subset,
                                                               batch_size=self.opt.batch_size,
-                                                              shuffle=self.opt.shuffle_batches,
+                                                              shuffle=False,
                                                               num_workers=int(self.opt.num_threads))
+
                 }
             }
         )

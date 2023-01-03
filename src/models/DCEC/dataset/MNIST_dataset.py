@@ -37,6 +37,7 @@ class MNISTDataset(BaseDataset):
     def __init__(self, opt, transform=None, target_transform=None):
         BaseDataset.__init__(self, opt)
         self.config = edict(load_config('MNIST_configuration.yaml', self.opt.config_dir))
+        self.opt = opt
         self.root = os.path.expanduser(os.path.join('./data','MNIST' ))
         self.type = opt.mnist_mode
         self.transform = transform
@@ -80,6 +81,8 @@ class MNISTDataset(BaseDataset):
                 """
         parser.add_argument('--mnist_mode', type=str, default='small', choices=['None', 'small', 'full'], help='Dataset loading options.')
         parser.add_argument('--perc', type=float, default=0.1, help='Percentage of dataset')
+        parser.add_argument('--image_shape', type=int, default=32, help='image dimension')
+
         return parser
 
     def set_transform(self, transform=None):

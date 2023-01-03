@@ -31,17 +31,16 @@ class BaseOptions(object):
     def initialize(self, parser):
         """ Define the common options for both training/testing script"""
 
-        # basic parameters
-        #parser.add_argument('--dataroot', required=True,
-        #    help='path to images (should have subfolders trainA, trainB, valA, valB, etc)')
+        # basic parameter
+        parser.add_argument('--workdir', default=r'C:\Users\Ruffi\Desktop\Deep_clustering_SEM-EX')
         parser.add_argument('--experiment_name', default='experiment_name',
             help='name of the experiment. It decides where to store samples and models')
         parser.add_argument('--use_wandb', action='store_true', help='use wandb')
         parser.add_argument('--gpu_ids', type=str, default='0', help='gpu ids: e.g. 0  0,1,2, 0,2. use -1 for CPU')
         # Directories outside the src module
-        parser.add_argument('--reports_dir', type=str, default='./reports', help='Customized report direcrtory folder, else it would be put like /src/reports ' )
-        parser.add_argument('--config_dir', type=str, required=True, default="C:\\Users\\Ruffi\\Desktop\\Deep_clustering_SEM-EX\\configs", help='configs files folder IMPORTANT:')
 
+        parser.add_argument('--reports_dir', type=str, default='reports',required=True, help='Customized report direcrtory folder, else it would be put like /src/reports ' )
+        parser.add_argument('--config_dir', type=str, required=True, default="configs", help='configs files folder IMPORTANT')
         parser.add_argument('--model', default='DCEC', choices=['DCEC'], help='Model name for the experiment.')
         parser.add_argument('--AE_cfg_file', default='AE_layers_settings.yaml',
              help='Layers setting file for CAE')
@@ -52,7 +51,7 @@ class BaseOptions(object):
             help='Alpha coefficient for t-Student probability distribution.')
         parser.add_argument('--rec_type', type=str, default='bce', choices=['mse', 'bce', 'vanilla'], help='Type of '
                                                                                                          'reconstruction loss function.')
-        parser.add_argument('--AE_type', type=str, default='CAE2', choices=['CAE2', 'CAE3', 'CAE512', 'CAE224'],
+        parser.add_argument('--AE_type', type=str, default='CAE2', choices=['CAE2', 'CAE3', 'CAE512', 'CAE224', 'CAE256'],
             help='type of architecture for the Autoencoder')
         parser.add_argument('--activations', type=str, default='sigmoid', choices=['sigmoid', 'tanh', 'none'],
             help='Activations for Autoencoder.')
@@ -80,10 +79,10 @@ class BaseOptions(object):
             help='customized suffix: opt.name = opt.name + suffix: e.g., {model}_{netG}_size{load_size}')
         # Dataset images
         parser.add_argument('--id_exp', type=str, default='ID1')
-        parser.add_argument('--dataset_name', required=True, default='MNIST', choices=['MNIST', 'CLARO', 'GLOBES', 'GLOBES_2'], help='CLARO or MNIST')
+        parser.add_argument('--dataset_name', required=True, default='MNIST', choices=['MNIST', 'CLARO', 'GLOBES', 'GLOBES_2'], help='CLARO,MNIST, GLOBES datasets')
         parser.add_argument('--shuffle_batches', action='store_true', help='if true, randomizes the order to make batches, otherwise takes them in order')
-        parser.add_argument('--num_threads', default=4, type=int, help='# threads for loading data')
-        parser.add_argument('--batch_size', type=int, default=32, help='input q_ij size')
+        parser.add_argument('--num_threads', default=6, type=int, help='# threads for loading data')
+
         parser.add_argument(
             '--max_dataset_size', type=int, default=float("inf"),
             help='Maximum number of samples allowed per dataset. If the dataset directory contains more than max_dataset_size, only a subset is loaded.'

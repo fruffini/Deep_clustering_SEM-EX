@@ -235,25 +235,45 @@ def iterative_evaluation_test():
 
 import sys
 
-"""
-sys.argv.extend(
-        [
-            '--phase', 'test',
-            '--dataset_name', 'GLOBES_2',
-            '--reports_dir', '/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/reports',
-            '--config_dir', '/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/configs',
-            '--embedded_dimension', '256',
-            '--AE_type', 'CAE224',
-            '--gpu_ids','0,1',
-            '--id_exp','ID_GLOBES_2_1',
-            '--threshold', '95',
-            '--k_0', '2',
-            '--k_fin', '9',
-            '--shuffle_batches'
-        ]
-    )"""
+#--------------------------------------------------------------------------------------------------
+# OPENING FUNCTION CALL: RUN/DEBUG
+
+def debugging_only():
+    print("".center(100, '°'))
+    print(" DEBUG MODALITY ".center(100, '°'))
+    print("".center(100, '°'))
+    sys.argv.extend(
+            [   '--phase', 'test',
+                '--dataset_name', 'GLOBES_2',
+                '--reports_dir', '/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/reports',
+                '--config_dir', '/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/configs',
+                '--embedded_dimension', '256',
+                '--AE_type', 'CAE224',
+                '--gpu_ids','0,1',
+                '--id_exp','ID_GLOBES_2_1',
+                '--threshold', '95',
+                '--k_0', '2',
+                '--k_fin', '2',
+                '--num_threads', '1',
+            ]
+        )
+def running():
+    print("".center(100, '*'))
+    print(" RUNNING MODALITY ".center(100, '*'))
+    print("".center(100, '*'))
 
 if __name__ == '__main__':
+    """
+    Detecting if you're in the PyCharm debugger or not
+    If you put a breakpoint HERE and look at the callstack you will 
+    see the entry point is in 'pydevd.py'
+    In debug mode, it copies off sys.argv: "sys.original_argv = sys.argv[:]"
+    We abuse this knowledge to test for the PyCharm debugger.
+    """
+
+    if util_general.is_debug():
+        running = debugging_only
+    running()
 
     util_general.print_CUDA_info()
     Option = TestOptions()  # test options

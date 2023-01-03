@@ -110,7 +110,7 @@ def init_net(net, init_type='normal', init_gain=0.02, gpu_ids=list):
     Parameters:
         net (network)      -- the network to be initialized
         init_type (str)    -- the name of an initialization method: normal | xavier | kaiming | orthogonal
-        gain (float)       -- scaling factor for normal, xavier and orthogonal.
+        init_gain (float)       -- scaling factor for normal, xavier and orthogonal.
         gpu_ids (int list) -- which GPUs the network runs on: e.g., 0,1,2
 
     Return an initialized network.
@@ -272,9 +272,9 @@ class Encoder(torch.nn.Module):
         :rtype:   (torch.nn.Sequential)
         """
         # inizializzazione variabili:
-        input_shape = self.opt.img_shape  # image shape input
+        input_shape = self.opt.image_shape  # image shape input
         in_channels = self.opt.input_nc
-        current_shape = (input_shape[0], input_shape[1])
+        current_shape = (input_shape,)*2
         features_channels = self.arch.features_channels
         kernels = self.arch.kernels
         strides = self.arch.strides
@@ -500,7 +500,7 @@ class Clustering_Layer(nn.Module):
     def forward(self, batch):
         """
                 Compute the soft assignment for a q_ij of feature vectors, returning a q_ij of assignments
-                for each cluster.
+                for each cluster. alpha is the degree of freedom
                 :param batch: FloatTensor of [q_ij size, embedding dimension]
                 :return: FloatTensor [q_ij size, number of clusters]
         """

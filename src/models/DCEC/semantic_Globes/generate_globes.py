@@ -18,8 +18,6 @@ def midpoints(x):
         sl += np.index_exp[:]
     return x
 
-
-
 sys.argv.extend(
         [
             '--max_globes', '3',
@@ -27,7 +25,9 @@ sys.argv.extend(
             '--N_patients', '200',
             '--dataset_name', 'GLOBES_2',
             '--surface_thickness', '2',
-            '--surface'
+            '--surface',
+            '--export_data_dir', 'data'
+
         ]
     )
 @click.command(context_settings=dict(help_option_names=['-h', '--help']))
@@ -46,6 +46,8 @@ sys.argv.extend(
 def main(**kwargs):
     opt = EasyDict(**kwargs)
 
+    # Changing project directory
+    os.chdir('C:\\Users\\Ruffi\\Desktop\\Deep_clustering_SEM-EX\\src\\models\\DCEC')
     # DEFINITION OF THE INTERNAL CUBE SPACE WHERE ARE GENERATED THE SPHERE CENTERS
     image_dim = opt.image_dim
     radius_range = opt.radius_range
