@@ -59,7 +59,7 @@ def train():
 
         if epoch_counter % opt.shuffle_interval == 0 and opt.shuffle_interval != 0:
             dataset.shuffle_data()
-            delta_bool = model.update_target(dataloader = dataset.dataloader_big_batch, indexing=dataset.get_new_indexig())
+            delta_bool = model.update_target(dataloader=dataset.dataloader_big_batch, indexing=dataset.get_new_indexig())
             updated_target = True
             epoch_counter = 0
 
@@ -99,6 +99,7 @@ def train():
         epoch_counter += 1
         print('Training time for 1 epoch : ', np.round((time.time() - epoch_start_time), 2), ' ( sec )')
         if exit_:
+            model.save_networks('end_training')
             return
         else:
             continue
@@ -147,7 +148,6 @@ def debugging_only():
             '--workdir', '/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX',
             '--phase', 'train',
             '--dataset_name', 'GLOBES_2',
-
             '--lr_policy', 'cosine-warmup',
             '--reports_dir','/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/reports',
             '--config_dir', '/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/configs',
@@ -164,7 +164,8 @@ def debugging_only():
             '--experiment_name', 'debug',
             '--shuffle_interval', '10',
             '--verbose',
-            '--batch_size', '16',
+            '--delta_check',
+            '--batch_size', '64',
             '--lr_tr', '0.001'
         ]
     )

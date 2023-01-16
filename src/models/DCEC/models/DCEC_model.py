@@ -322,7 +322,6 @@ class DCECModel(BaseModel):
         with pd.ExcelWriter(labels_file) as writer:
             data.to_excel(writer, sheet_name='Data_complete')
 
-
         # Datasets Directory
         Datasets_file = os.path.join(self.opt.path_man.get_path('labels_dir'),'datasets_z_q_K_%s'%format(str(self.opt.num_clusters)) )
         np.savez_compressed(Datasets_file, Z_dataset=Dataset_z, Q_Dataset=Dataset_qij)
@@ -356,7 +355,10 @@ class DCECModel(BaseModel):
                 'img ID': [id + '_' + img_id for id, img_id in zip(output['id_patient'], output['image_id'])],
                 'patient ID': output['id_patient'],
                 'image_id': output['image_id'],
-                'clusters_labels': list(y_pred)}
+                'clusters_labels': list(y_pred),
+                'indexes': list(indexing[0])
+            }
+
             # Datasets to save
             Datasets = {
                         'Dataset_z': self.z_encoded_tot.numpy().copy(),
@@ -372,13 +374,13 @@ class DCECModel(BaseModel):
             print(f' 1) The list of unique labels assigned: {uniques} \n '
                   f' 2) Uniques distribution:  {counts}')
             # For the first updating the labels are given by k-means fitting algorithm
-            y_pred_last = np.copy(self.y_prediction)
+            y_pred_last = np.copy(self.y_prediction)[indexing[0]]
             # Setting of the new labels assigned to samples
             self.y_prediction = np.copy(y_pred)
             # check stop criterion
             if self.opt.delta_check:
                 # Check stop condition if the parameter is set in option.
-                y_pred_last = y_pred_last[indexing[0]]
+
                 delta_label = np.sum(np.array(y_pred) != y_pred_last).astype(np.float32) / \
                               y_pred.shape[0]
                 print(

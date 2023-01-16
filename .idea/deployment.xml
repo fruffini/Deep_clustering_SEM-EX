@@ -28,6 +28,7 @@
             <excludedPath local="true" path="$PROJECT_DIR$/data" />
             <excludedPath local="true" path="$PROJECT_DIR$/RISULTATI WORKSTATION" />
             <excludedPath local="true" path="$PROJECT_DIR$/venv_GENERALI" />
+            <excludedPath local="true" path="$PROJECT_DIR$/envs" />
           </excludedPaths>
         </serverdata>
       </paths>

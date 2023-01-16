@@ -1,4 +1,6 @@
 import time
+from typing import Tuple, Dict, Any, List
+
 import numpy as np
 import torch
 from sklearn.cluster import KMeans
@@ -124,18 +126,22 @@ def kmeans(model, dataloader, opt):
     return x_out, km, prediction
 
 
-def weighted_var_and_var(values: object, weights: object) -> object:
+def weighted_var(values: list, weights: list) -> np.ndarray:
     """
     Return the weighted average and traditional variance of values.
-
-
     values, weights -- Numpy ndarrays with the same shape.
     """
-    mean = np.mean(values)
+    mean = np.average(values, weights=weights)
     # Fast and numerically precise:
     variance_w = np.average((values - mean) ** 2, weights=weights)
-    variance = np.var(values)
-    return variance, variance_w
+    return variance_w
+
+def weighted_cov(P1: float, w_1: list, P2: float, w_2) -> np.ndarray:
+    mean_1 = np.average(P1, weights=w_1)
+    mean_2 = np.average(P2, weights=w_2)
+
+
+
 
 
 def gini(array):
@@ -161,22 +167,42 @@ def gini(array):
     return ((np.sum((2 * index - n - 1) * array)) / (n * np.sum(array)))
 
 
+def compute_probabilities_variables(
+        labels: np.ndarray, probability: np.ndarray, ids: np.ndarray, id_dict: Dict[Any, int], threshold: float = 90) -> Tuple[float, float, float, np.ndarray, List[int]]:
+    """
+        This function computes several values related to the input variables 'labels', 'probability', 'ids', and 'id_dict'.
+        It also takes an optional input 'threshold' with a default value of 90.
+        The computed values include the mean maximum probability, the mean number of prototypes,
+        and a mutual information criterion.
 
-def compute_probabilities_variables(labels, probability, ids, id_dict, threshold=90):
-    # Cerco le strnghe associate ad ogni paziente:
+        Parameters:
+        labels (array-like) : The labels assigned to each element in the input 'ids'
+        probability (array-like) : The probability of each label being assigned to each element in the input 'ids'
+        ids (array-like) : A unique identifier for each element being labeled
+        id_dict (dict) : A dictionary that maps each element in the input 'ids' to a corresponding integer value
+        threshold (float) : A threshold value for the maximum probability, used to filter the input data.
+
+        Returns:
+        mean_max (float) : The mean maximum probability of the input data
+        mean_n_prototypes (float) : The mean number of prototypes for each cluster
+        Mutual_information_criterion (float) : The Mutual information criterion calculated from the input data
+        indices_th (array-like) : Indices of the elements in the input 'ids' that pass the threshold
+        prototypes_for_cluster (list) : A list containing the number of prototypes for each cluster
+    """
+    # Search for the strings associated with each patient:
     patients = np.unique(ids)
     weights_k = np.bincount(labels)
     weights_k = weights_k[weights_k != 0]
-    # Salvo il numero reale labels assegnate = numero di K effettivo.
+    # Take the assignment probabilities of the labels, and calculate the maximum value:
     real_K = np.unique(labels)
-    # Prendo le probilità di assegnazione delle labels, e ne calcolo il valore massimo:
+    # Take the maximum probability values, and calculate the mean value:
     saved = probability.max(1)
-    # Inserisco un threshold di confidenza.
+    # Insert a confidence threshold.
     th = threshold/100
-    # Prendo i valori massimi di probabilità, e ne calcolo il valore medio:
-    max_values = [el.item() for el in saved[0].detach()]
+    # Take the maximum probability values, and calculate the mean value:
+    max_values = [el.item() for el in saved]
     mean_max_probabilities = np.mean(max_values)
-    # Seleziono sia le lebal che gli indici rispetto al threshold.
+    # Select both the lebal and the indices according to the threshold.
     indices_th = [max_ > th for max_ in max_values]
     labels_th = labels[indices_th]
     ids_th = ids[indices_th]
@@ -193,75 +219,149 @@ def compute_probabilities_variables(labels, probability, ids, id_dict, threshold
     id_int_array = np.array([id_dict[id] for id in ids])
     Mutual_information_criterion = NMI(labels_true=id_int_array, labels_pred=labels)
 
-    # Report print probabilities
-    print('-----------------Report Probabilities Debugger ---------------------')
-    print('ids: ', ids)
-    print('indices_th: ', indices_th)
-    print('labels_th: ', labels_th)
-    print('ids_th: ', ids_th)
-    print('Max values mean: ', mean_max_probabilities)
-    print('--------------------------------------------------------------------')
-
-
     return mean_max, mean_n_prototypes, Mutual_information_criterion, indices_th, prototypes_for_cluster
 
-def compute_GINI(list_distribution):
-    gini_index_for_t = [gini(element[np.nonzero(element)].astype(np.float64)) for element in np.array(
-        list_distribution)]
+
+def compute_GINI(list_distribution: List[np.ndarray]) -> Tuple[List[float], float]:
+    """
+    This function computes the Gini index for each array in the input list and returns a tuple containing
+    a list of Gini indices and the cumulative Gini index.
+
+    Parameters:
+    list_distribution (list): A list of numpy arrays
+
+    Returns:
+    gini_index_for_t (list): A list of Gini indices for each array in the input list
+    cumulative_gini (float): The cumulative Gini index calculated by summing the individual Gini indices
+    """
+    gini_index_for_t = [gini(element[np.nonzero(element)].astype(np.float64)) for element in np.array(list_distribution)]
     cumulative_gini = np.sum(gini_index_for_t)
     return gini_index_for_t, cumulative_gini
 
 
+def calc_Delta_metrics(matrix: np.ndarray) -> Tuple[Any, Any]:
+    """
+    This function calculates the delta matrix and the delta sum matrix
+    and returns all the matrices
 
-def calc_Delta_metrics(matrix, N01=False):
-    matrix = np.array(
-        [list((matrix[:, i] - np.min(matrix[:, i])) / (np.max(matrix[:, i]) - np.min(matrix[:, i]))) for
-         i in range(matrix.shape[1])]).transpose() if N01 else matrix.copy()
-    D_matrix = np.array(
-        [list((matrix[i + 1, :]) - (matrix[i, :])) for i in range(matrix.shape[0] - 1)])
+    Parameters:
+    matrix (ndarray) : The matrix to use to calculate delta metric from
+
+    Returns:
+    D_matrix (ndarray): The delta matrix
+    D_sum_matrix (ndarray): The delta sum matrix
+    """
+    D_matrix = np.array([list((matrix[i + 1, :]) - (matrix[i, :])) for i in range(matrix.shape[0] - 1)])
     D_sum_matrix = D_matrix.sum(1)
-    return matrix, D_matrix, D_sum_matrix
+
+    return D_matrix, D_sum_matrix
 
 
+def COV_matrix_frquencies(labels: np.array, ids: np.array, z_: np.array):
+    """
+     Compute the variances of the clusters distribution over the patients.
 
-def TF_Variances_ECF(z_, labels, ids):
+     Parameters:
+         - z_ (np.array): matrix of variables where each row represents a data point and each column represents a variable.
+         - labels (np.array): vector of labels, where each element corresponds to a data point.
+         - ids (np.array): vector of ids, where each element corresponds to a data point.
+
+     Returns:
+         - Var_SF (list): list of variances of the cluster distribution over the patients.
+         - Var_SF_weighted (list): list of weighted variances of the cluster distribution over the patients.
+         - list_Number_of_element_over_t (list): list of the number of elements of each patient over the clusters.
+     """
+    # Get unique patients IDs
     patients = np.unique(ids)
     N_patients = len(patients)
+    # Count the number of elements in each cluster
     count_by_cluster = np.bincount(labels)
     K = len(count_by_cluster)
-    index_clusters = np.arange(0, K)
-    X_for_patient = list()
-    labels_for_patient = list()
+    # Variances: rispetto al numero di slices di t (t_t) e al numero di slices di k (t_k).
+    frequency_for_patient = list()
+    list_Number_of_element_over_t = list()
+    # Compute a new list that contains z_ samples and labels for each patient.
+    X_for_patient = [z_[[patient == id for id in ids]] for patient in patients]
+    labels_for_patient = [z_[[patient == id for id in ids]] for patient in patients]
+    # Iteration over patients:
+    vars = list()
+    covs = list()
+
+    for t in range(N_patients):
+        # Dataset for patient ( Tensor of slices for patient ID )
+        X_ = X_for_patient[t]
+        # Separation of the patient in different clusters:
+        slices_for_patient = list()
+        list_SF = list()
+        # Iterate clusters:
+        for k in np.unique(labels):
+            # Indexing to find images related to a certain cluster:
+            select_t = [label.item() == k for label in labels_for_patient[t]]
+            if not len(X_[select_t]) == 0 or True:
+                # Frequency between the number of slices of the patient in cluster k and the total number of slices of the patient t:
+                sf_t_t = len(X_[select_t]) / labels_for_patient[t].shape[0]
+                # Save all values in lists, scalable later with tensors or arrays:
+                list_SF.append(sf_t_t)
+                slices_for_patient.append(len(X_[select_t]))
+        frequency_for_patient.append(list_SF)
+        # Normal and weighted variance:
+        # Distribuzione di slices paziente over clusters:
+        list_Number_of_element_over_t.append(slices_for_patient)
+        # Calculate var weighted:
+
+        #var = np.average((list_SF - mean) ** 2, weights=weights[i])
+
+    # Calculate var and covariance
+
+
+
+
+def TF_Variances_ECF(z_: np.array, labels: np.array, ids: np.array) -> Tuple[list, list, list]:
+    """
+    Compute the variances of the clusters distribution over the patients.
+
+    Parameters:
+        - z_ (np.array): matrix of variables where each row represents a data point and each column represents a variable.
+        - labels (np.array): vector of labels, where each element corresponds to a data point.
+        - ids (np.array): vector of ids, where each element corresponds to a data point.
+
+    Returns:
+        - Var_SF (list): list of variances of the cluster distribution over the patients.
+        - Var_SF_weighted (list): list of weighted variances of the cluster distribution over the patients.
+        - list_Number_of_element_over_t (list): list of the number of elements of each patient over the clusters.
+    """
+    # Get unique patients IDs
+    patients = np.unique(ids)
+    N_patients = len(patients)
+    # Count the number of elements in each cluster
+    count_by_cluster = np.bincount(labels)
+    K = len(count_by_cluster)
     # Variances: rispetto al numero di slices di t (t_t) e al numero di slices di k (t_k).
     Var_SF = list()
     Var_SF_weighted = list()
     list_Number_of_element_over_t = list()
-
-    for patient in patients:
-        ind = [patient == id for id in ids]
-        X_for_patient.append(z_[ind])
-        labels_for_patient.append(labels[ind])
-
+    # Compute a new list that contains z_ samples and labels for each patient.
+    X_for_patient = [z_[[patient == id for id in ids]] for patient in patients]
+    labels_for_patient = [z_[[patient == id for id in ids]] for patient in patients]
+    # Iteration over patients:
     for t in range(N_patients):
-        # COMPUTE OVER t:
         # Dataset for patient ( Tensor of slices for patient ID )
         X_ = X_for_patient[t]
         # Distribuzioni del paziente nei clusters:
         list_Number_of_element = list()
         list_SF = list()
-        for k in np.unique(labels):
 
-            # indicizzazione per cercare le immagini correlate con un certo cluster:
+        for k in np.unique(labels):
+            # Indexing to find images related to a certain cluster:
             select_t = [label.item() == k for label in labels_for_patient[t]]
             if not len(X_[select_t]) == 0 or True:
-                # frequenza tra il numero di slices del paziente nel cluster k e il numero totale di slices del
-                # paziente t:
+                # Frequency between the number of slices of the patient in cluster k and the total number of slices of the patient t:
                 sf_t_t = len(X_[select_t]) / labels_for_patient[t].shape[0]
-                # salvo tutti i valori in delle liste, scalabili successivamente con tensori o array:
-
+                # Save all values in lists, scalable later with tensors or arrays:
                 list_SF.append(sf_t_t)
                 list_Number_of_element.append(len(X_[select_t]))
-        Var ,Var_w = weighted_var_and_var(np.array(list_SF), np.array(list_Number_of_element))
+        # Normal and weighted variance:
+        Var ,Var_w = weighted_var(np.array(list_SF), np.array(list_Number_of_element))
 
         # Varianza normale e pesata:
         Var_SF_weighted.append(Var_w)
@@ -271,6 +371,7 @@ def TF_Variances_ECF(z_, labels, ids):
         list_Number_of_element_over_t.append(list_Number_of_element)
 
     return Var_SF, Var_SF_weighted, list_Number_of_element_over_t
+
 
 def target_distribution(batch):
     """

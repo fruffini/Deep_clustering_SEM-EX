@@ -85,6 +85,7 @@ class CustomDatasetDataLoader():
         )
 
     def get_new_indexig(self):
+        print(" New Indexing:",self.dataset.data['index_number'])
         return np.array(self.dataset.data['index_number']), self.dataset.data['index_number']
 
     def shuffle_data(self):

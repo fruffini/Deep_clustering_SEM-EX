@@ -15,7 +15,6 @@
       <sourceFolder url="file://$MODULE_DIR$/src/models/xAI/util" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/models/CNN_validation" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/models/DCEC/semantic_Globes" isTestSource="false" />
-      <excludeFolder url="file://$MODULE_DIR$/reports" />
     </content>
     <orderEntry type="jdk" jdkName="Remote Python 3.6.8 (/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/envs/SEM-EX-env/bin/python3)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />

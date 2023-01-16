@@ -32,7 +32,7 @@ echo "ID experiment: $1"
 echo "K initial: $2"
 echo "K final: $3"
 echo "Dataset name: $dataset"
-activation_d=650
+activation_d=300
 ID=$1
 
 
@@ -44,15 +44,15 @@ arch='CAE256'
 lr_policy='cosine-warmup'
 emb=128
 batch_size=64
-gamma=0.03
+gamma=0.05
 lr_pr=0.002
-lr_tr=0.0005
+lr_tr=0.0007
 
-n_ep=400
-n_ep_d=300
-d_lab=0.002 # if the delta labels is under 2 °% we can stop the training, only after 150 epochs
+n_ep=300
+n_ep_d=200
+d_lab=0.005 # if the delta labels is under 2 °% we can stop the training, only after 150 epochs
 str_ids='0,1,2,3' # we use only two GPUs
-shuffle_interval=20
+shuffle_interval=30
 # ID string for the experiment
 ID=$1
 # K parameters : This part guarantees the training of the model respect different number of clusters,
@@ -63,7 +63,7 @@ k_final=$3
 
 python train.py --id_exp ID_${ID} --num_threads=6 --experiment_name experiments_stage_2 --phase pretrain --lr_pr=${lr_pr} --embedded_dimension=${emb} --dataset_name=${dataset} --n_epochs=25 --n_epochs_decay=25 --AE_type=${arch} --save_latest_freq=5000 --gpu_ids=${str_ids} --dataset_name=${dataset} --config_dir=${cof} --workdir=${workdir} --reports_dir=${rep} --shuffle_batches  --verbose --box_apply --data_dir=${dat}
 
-python train.py --id_exp ID_${ID} --lr_policy=${lr_policy} --experiment_name experiments_stage_2 --lr_tr=${lr_tr} --shuffle_interval=${shuffle_interval} --phase train --activation_delta=${activation_d} --batch_size=${batch_size} --n_epochs=${n_ep} --n_epochs_decay=${n_ep_d} --gamma=${gamma} --delta_check --k_0=${k_initial} --k_fin=${k_final} --update_interval=4500 --delta_label=${d_lab} --embedded_dimension=${emb} --box_apply --AE_type=${arch} --save_latest_freq=20000 --gpu_ids=${str_ids} --dataset_name=${dataset} --config_dir=${cof} --workdir=${workdir} --reports_dir=${rep} --data_dir=${dat} --verbose --delta_check
+python train.py --id_exp ID_${ID} --num_threads=6 --lr_policy=${lr_policy} --experiment_name experiments_stage_2 --lr_tr=${lr_tr} --shuffle_interval=${shuffle_interval} --phase train --activation_delta=${activation_d} --batch_size=${batch_size} --n_epochs=${n_ep} --n_epochs_decay=${n_ep_d} --gamma=${gamma} --delta_check --k_0=${k_initial} --k_fin=${k_final} --update_interval=4500 --delta_label=${d_lab} --embedded_dimension=${emb} --box_apply --AE_type=${arch} --save_latest_freq=20000 --gpu_ids=${str_ids} --dataset_name=${dataset} --config_dir=${cof} --workdir=${workdir} --reports_dir=${rep} --data_dir=${dat} --verbose --delta_check
 
 # Deactivate venv
 deactivate

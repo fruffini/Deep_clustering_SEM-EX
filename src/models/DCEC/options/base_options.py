@@ -82,7 +82,7 @@ class BaseOptions(object):
         parser.add_argument('--dataset_name', required=True, default='MNIST', choices=['MNIST', 'CLARO', 'GLOBES', 'GLOBES_2'], help='CLARO,MNIST, GLOBES datasets')
         parser.add_argument('--shuffle_batches', action='store_true', help='if true, randomizes the order to make batches, otherwise takes them in order')
         parser.add_argument('--num_threads', default=6, type=int, help='# threads for loading data')
-
+        parser.add_argument('--batch_size', type=int, default=64, help='input q_ij size')
         parser.add_argument(
             '--max_dataset_size', type=int, default=float("inf"),
             help='Maximum number of samples allowed per dataset. If the dataset directory contains more than max_dataset_size, only a subset is loaded.'

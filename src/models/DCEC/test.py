@@ -1,11 +1,9 @@
 # Test code for to avaluate
 import os
 import csv
-import pickle
 
 import numpy as np
-import torch
-
+from torch.utils.data import Subset, DataLoader
 from util import util_clustering
 from util import util_data
 from util import util_general
@@ -19,7 +17,7 @@ from models import create_model
 
 global model
 global dataset
-
+import pandas as pd
 
 def iterative_evaluation_test():
     """ Function to evaluate every metric for each clustering method """
@@ -50,6 +48,7 @@ def iterative_evaluation_test():
     metrics_file_path = os.path.join(tables_dir, 'DCECs_log_clustering_metrics_over_k.csv')
     Var_gini_file_path = os.path.join(tables_dir, 'DCECs_log_variances_gini_.csv')
     probabilities_file_path = os.path.join(tables_dir, 'DCECs_log_probabilities_over_k.csv')
+
     # CSV METRICS FILES :
 
     logfile_metrics_end = open(metrics_file_path, 'w')
@@ -80,6 +79,10 @@ def iterative_evaluation_test():
     logwriter_probabilities_end.writeheader()
     logwriter_variances_gini_end.writeheader()
     dataloader = dataset.dataloader
+    from easydict import EasyDict as edict
+    new_metrics = edict()
+
+
 
     for k in np.arange(opt.k_0, opt.k_fin + 1):  # outer loop for different model instanced with different cluster number intialization MODEL_k -> MODEL_k+1
         #  _______________________________________________________________________________________________
@@ -94,7 +97,6 @@ def iterative_evaluation_test():
         model = create_model(opt=opt)
         model.setup(opt=opt)
         if model.load_model_trained():
-            DT = util_path.DirectoryTree(root_dir=opt.reports_dir)
             print(
                 f"\n _______________________________________________________________________________________________ "
                 f"\n INFORMATION: the DCEC model with K = {k} has been loaded.  "
@@ -102,21 +104,36 @@ def iterative_evaluation_test():
             )
             import deepdish as dd
             # Compute encoded samples
-            labels_dir = os.path.join(model.load_dir, 'LABELS')
-            labels_file = os.path.join(labels_dir,'ids_tot_z_latent_K_{0}.h5'.format(k))
-            if not os.path.exists(labels_dir) or opt.redo_encoding:
-                util_general.mkdir(labels_dir)
-                dict_out = model.compute_encoded(dataloader)
-                dd.io.save(labels_file, dict_out)
-            else:
-                dict_out = dd.io.load(labels_file)
+            labels_dir = os.path.join(model.load_dir, 'labels')
+            labels_file = os.path.join(labels_dir, 'data_clusters_labels_K_{0}_.xlsx'.format(k))
+            compressed_encoded_file = os.path.join(labels_dir, 'datasets_z_q_K_{}.npz'.format(k))
 
+            # load labels information
+            labels_info = pd.read_excel(labels_file)
 
-            ids_tot = dict_out['id']
-            x_out = dict_out['x_out']
-            z_latent = dict_out['z_latent']
-            # -----------------------------------------------------------------------------------------------
-            labels, q_ = model.get_predictions_probabilities(z_latent=z_latent)
+            # Sort the dataframe by column 'A'
+            sorted_df = labels_info.sort_values(by='indexes')
+
+            # Obtain the ordering index using argsort
+            ordering = np.argsort(labels_info['indexes'])
+
+            # Use the ordering index to sort another vector
+            datasets_z_q = np.load(compressed_encoded_file)
+
+            Z_encoded = datasets_z_q['Z_dataset']
+            Q_encoded = datasets_z_q['Q_Dataset']
+
+            # sort other vectors loaded inside this script file
+            indexing = np.linspace(start=0, stop=10000, endpoint=False, num=10, dtype=int)
+            train_subset = Subset(dataset.dataset, indexing)
+
+            x_out = None
+            for data in DataLoader(dataset=train_subset):
+                x_out = np.concatenate((x_out, data[0]), 0) if x_out is not None else data[0]
+            z_latent = Z_encoded[ordering]
+            q_ = Q_encoded[ordering]
+            labels = np.array(sorted_df['clusters_labels'])
+            ids_tot = np.array(sorted_df['patient ID'])
             # -----------------------------------------------------------------------------------------------
             id_unique_dict, inverse_id_dict = util_data.find_unique_id_dictionary(ids_=ids_tot)
             # -----------------------------------------------------------------------------------------------
@@ -126,23 +143,6 @@ def iterative_evaluation_test():
                 util_general.del_dir(plots_dir_labels_images)
             util_general.mkdir(plots_dir_labels_images)
             # Plot Clusters Examples
-            for k_loc in range(0, k):
-                idx_labels = [l == k_loc for l in np.array(labels)]
-                ids_lab_sel = ids_tot[idx_labels]
-                X_l_sel = x_out[idx_labels][:, 0, :, :]
-                print(X_l_sel.shape)
-                util_plots.show_labeled_data(
-                    X_l_sel=X_l_sel,
-                    select_label=k_loc,
-                    ids_lab_sel=ids_lab_sel,
-                    file_name=f"Data_Original_Globes_NK_{k}",
-                    save_dir=plots_dir_labels_images
-                )
-
-
-
-
-
 
             # Metrics Computation
             computed_metrics = util_clustering.metrics_unsupervised_CVI(Z_latent_samples=z_latent, labels_clusters=labels)
@@ -151,8 +151,7 @@ def iterative_evaluation_test():
             CH_score = computed_metrics['Calinski-Harabasz score']
             DB_score = computed_metrics['Davies-Douldin score']
 
-            soft_label_mean_assegnation_score, avarage_P_prototypes, Mutual_information_score, indices_th, \
-            P_for_cluster \
+            soft_label_mean_assegnation_score, avarage_P_prototypes, Mutual_information_score, indices_th, P_for_cluster \
                 = util_clustering.compute_probabilities_variables(
                 labels=labels,
                 ids=ids_tot,
@@ -166,6 +165,21 @@ def iterative_evaluation_test():
                 labels=labels,
                 ids=ids_tot
             )
+            # first of all try a new alternative to the only variances metric
+
+
+            util_clustering.COV_matrix_frquencies(
+                z_=z_latent,
+                labels=labels,
+                ids=ids_tot
+            )
+
+
+
+
+
+
+
             """if k == 0:
                 CDCC_ = Metrics_CCDC(
                     opt=opt,
@@ -244,16 +258,18 @@ def debugging_only():
     print("".center(100, '°'))
     sys.argv.extend(
             [   '--phase', 'test',
-                '--dataset_name', 'GLOBES_2',
+                '--dataset_name', 'CLARO',
+                '--data_dir', '/mimer/NOBACKUP/groups/snic2022-5-277/ltronchin/data',
+                '--experiment_name', 'experiments_stage_2',
                 '--reports_dir', '/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/reports',
                 '--config_dir', '/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/configs',
-                '--embedded_dimension', '256',
-                '--AE_type', 'CAE224',
-                '--gpu_ids','0,1',
-                '--id_exp','ID_GLOBES_2_1',
+                '--embedded_dimension', '128',
+                '--AE_type', 'CAE256',
+                '--gpu_ids','0',
+                '--id_exp','ID_1',
                 '--threshold', '95',
-                '--k_0', '2',
-                '--k_fin', '2',
+                '--k_0', '3',
+                '--k_fin', '14',
                 '--num_threads', '1',
             ]
         )
@@ -293,11 +309,6 @@ if __name__ == '__main__':
     Option.print_options(opt=opt, path_log_run=log_dir_exp)
     logger = util_general.Logger(file_name=os.path.join(log_dir_exp, 'log.txt'), file_mode="w", should_flush=True)
 
-    #  _______________________________________________________________________________________________
-    #  _______________________________________________________________________________________________
-    #                   DATA / MODEL / TRAIN
-    #  _______________________________________________________________________________________________
-    #  _______________________________________________________________________________________________
     # Welcome
 
     from datetime import datetime
