@@ -1,13 +1,17 @@
+import math
 import time
+from copy import deepcopy
 from typing import Tuple, Dict, Any, List
 
+import pandas as pd
+from easydict import EasyDict as edict
 import numpy as np
 import torch
 from sklearn.cluster import KMeans
-from sklearn.metrics import silhouette_score, calinski_harabasz_score, davies_bouldin_score
+from sklearn.metrics import silhouette_score, calinski_harabasz_score, davies_bouldin_score, adjusted_mutual_info_score
 from sklearn.metrics.cluster import normalized_mutual_info_score as NMI
 from tqdm import tqdm
-
+import itertools
 """Unsupervised Metrics script
 
 This script provides the main functions needed to evaluate the behavior of the model during training or post training.
@@ -39,27 +43,98 @@ Internal Validity Index Metrics ( NO-label-needed ) :
 
 
 class Metrics_CCDC(object):
-    def __init__(self, opt, ids, labels_Patients):
-        self.initialized = False
+    def __init__(self, opt):
         self.opt = opt
-        self.labels_for_each_K = dict()
-        self.ids = ids
-        self.labels_Patients = labels_Patients
+        self.labels_for_each_K = edict()
 
-    def add_new_Clustering_configuration(self, labels_clusters):
-        self.labels_for_each_K["K_{0}".format(self.opt.num_clusters)] = labels_clusters
-        return self
+    def add_new_Clustering_configuration(self, labels_info: pd.DataFrame) -> None:
+        self.labels_for_each_K["K_{0}".format(self.opt.num_clusters)] = labels_info
 
     def compute_CCDC(self):
         """Computing Clustering"""
         try:
-            assert self.labels_for_each_K.items().__len__()>1
-            C_ki = self.labels_for_each_K["K_{0}".format(self.opt.num_clusters - 1)] # the older cluster config
-            C_kf = self.labels_for_each_K["K_{0}".format(self.opt.num_clusters)]
+
+            all_Ks = [int(key.split('_')[1]) for key in self.labels_for_each_K.keys()]
+            # Output Matrices with all metrics computed
+            dimension_rows = sum([el for el in all_Ks[:-1]])
+            dimension_cols = sum([el for el in all_Ks[1:]])
+
+            # Dataframe Creation
+            matrix = np.zeros([dimension_rows, dimension_cols])
+            Columns_DF = list(itertools.chain(*[[f'K_{kj}_{j}' for j in np.arange(0, kj)] for kj in np.arange(min(all_Ks) + 1, max(all_Ks) + 1)]))
+            row_DF = list(itertools.chain(*[[f'K_{kj}_{j}' for j in np.arange(0, kj)] for kj in np.arange(min(all_Ks), max(all_Ks))]))
+            Columns_DF_NMI = [f'K_{k}' for k in np.arange(min(all_Ks), max(all_Ks))]
+            DICE_Similarity_matrix = pd.DataFrame(deepcopy(matrix), columns=Columns_DF, index=row_DF)
+            IOU_Similarity_matrix = pd.DataFrame(deepcopy(matrix), columns=Columns_DF, index=row_DF)
+            # NMI Matrix computer
+            matrix_NMI = np.zeros([dimension_rows, len(Columns_DF_NMI)])
+            NMI_matrix = pd.DataFrame(deepcopy(matrix_NMI), columns=Columns_DF_NMI, index=row_DF)
+            # Setting the firts K where to start (i):
+            k_rows = np.arange(min(all_Ks), max(all_Ks))
+            k_cols = np.arange(min(all_Ks) + 1, max(all_Ks) + 1)
+            list_NMI = list()
+            for ki, kj in zip(k_rows, k_cols):
+                # ------------- ROW ---------------
+                # Select the configuration of cluster with K = i:
+                lab_ki = self.labels_for_each_K['K_{0}'.format(ki)]
+                # Create a vector for each cluster
+                l_ki = np.unique(lab_ki['clusters_labels'])
+
+                # ------------- COL ---------------
+                # Select the configuration of cluster with K = j:
+                lab_kj = self.labels_for_each_K['K_{0}'.format(kj)]
+                # Create a vector for each cluster
+                l_kj = np.unique(lab_kj['clusters_labels'])
+                for l_ki_i in l_ki:
+                    # Select the SUB- DATAFRAME for ki and label i
+                    lab_i_i = lab_ki[lab_ki['clusters_labels']== l_ki_i]
+                    #
+                    for l_kj_j in l_kj:
+                        # Select the SUB- DATAFRAME for kj and label j
+                        lab_j_j = lab_kj[lab_kj['clusters_labels'] == l_kj_j]
+                        # COMPUTE DICE COEFFICIENT AND IOU:
+                        IOU_ij, DICE_ij = IOU_DICE(lab_i_i=lab_i_i, lab_j_j=lab_j_j)
 
 
-        except:
-            pass
+                        # Locate the results:
+                        DICE_Similarity_matrix.loc[f'K_{ki}_{l_ki_i}', f'K_{kj}_{l_kj_j}'] = DICE_ij
+                        IOU_Similarity_matrix.loc[f'K_{ki}_{l_ki_i}', f'K_{kj}_{l_kj_j}'] = IOU_ij
+                    # Adjusted Mutual Information Score
+                    lab_i_i = lab_i_i.drop_duplicates(subset='indexes')
+                    int_df = pd.merge(lab_i_i, lab_kj, how='inner', on=['indexes']).drop_duplicates(
+                        subset=['indexes']
+                    )
+                    NMI_i_kj = NMI(labels_true=lab_i_i['patient ID'], labels_pred=int_df['clusters_labels_y'])
+                    NMI_matrix.loc[f'K_{kj}_{l_kj_j}', f'K_{ki}'] = NMI_i_kj
+            return DICE_Similarity_matrix, IOU_Similarity_matrix, NMI_matrix
+        except Exception as e:
+            print(e)
+
+
+
+def IOU_DICE(lab_i_i: pd.DataFrame, lab_j_j: pd.DataFrame):
+
+    # Intesection between two Dataframe
+    int_df = pd.merge(lab_i_i, lab_j_j, how ='inner', on =['image_id'])
+    card_int = int_df.shape[0]
+    # Union over two dataframes
+    union_df = pd.concat([lab_i_i, lab_j_j]).drop_duplicates(subset=['indexes'])
+    card_union = union_df.shape[0]
+    # Card over the two subsets
+    cards_i_j = lab_i_i.shape[0] + lab_j_j.shape[0]
+    # DICE
+    DICE_coeff_i_j = 2 * card_int / cards_i_j
+    # IOU
+    IOU_i_j = card_int / card_union
+
+    return IOU_i_j, DICE_coeff_i_j,
+
+
+
+
+
+
+
 
 
 def metrics_unsupervised_CVI(Z_latent_samples, labels_clusters):
@@ -81,7 +156,7 @@ def metrics_unsupervised_CVI(Z_latent_samples, labels_clusters):
     ----------
     """
     try:
-        assert np.unique(labels_clusters).shape[0]>1
+        assert np.unique(labels_clusters).shape[0] > 1
         # 1) Silhouette_Score:
         Si_score = silhouette_score(Z_latent_samples, labels_clusters)
         # 2) Calinski_Harabasz_score:
@@ -115,18 +190,16 @@ def kmeans(model, dataloader, opt):
     z_encoded_tot = output['z_latent']
     x_out = output['x_out']
 
-
-
     # Fit k-means algorithm on concatenated samples and predict labels
     print("INFO: ---> Kmeans fitting on course...")
     time_kmeans_0 = time.time()
     prediction = km.fit_predict(z_encoded_tot)
     time_kmeans_f = time.time()
-    print("INFO: ---> Kmeans fitted on data \n Time needed for fitting", (time_kmeans_f-time_kmeans_0)/60, '( min. )')
+    print("INFO: ---> Kmeans fitted on data \n Time needed for fitting", (time_kmeans_f - time_kmeans_0) / 60, '( min. )')
     return x_out, km, prediction
 
 
-def weighted_var(values: list, weights: list) -> np.ndarray:
+def weighted_var(values: np.array, weights: np.array) -> np.ndarray:
     """
     Return the weighted average and traditional variance of values.
     values, weights -- Numpy ndarrays with the same shape.
@@ -136,12 +209,10 @@ def weighted_var(values: list, weights: list) -> np.ndarray:
     variance_w = np.average((values - mean) ** 2, weights=weights)
     return variance_w
 
+
 def weighted_cov(P1: float, w_1: list, P2: float, w_2) -> np.ndarray:
     mean_1 = np.average(P1, weights=w_1)
     mean_2 = np.average(P2, weights=w_2)
-
-
-
 
 
 def gini(array):
@@ -168,7 +239,8 @@ def gini(array):
 
 
 def compute_probabilities_variables(
-        labels: np.ndarray, probability: np.ndarray, ids: np.ndarray, id_dict: Dict[Any, int], threshold: float = 90) -> Tuple[float, float, float, np.ndarray, List[int]]:
+        labels: np.ndarray, probability: np.ndarray, ids: np.ndarray, id_dict: Dict[Any, int], threshold: float = 90
+) -> Tuple[float, float, float, np.ndarray, List[int]]:
     """
         This function computes several values related to the input variables 'labels', 'probability', 'ids', and 'id_dict'.
         It also takes an optional input 'threshold' with a default value of 90.
@@ -198,7 +270,7 @@ def compute_probabilities_variables(
     # Take the maximum probability values, and calculate the mean value:
     saved = probability.max(1)
     # Insert a confidence threshold.
-    th = threshold/100
+    th = threshold / 100
     # Take the maximum probability values, and calculate the mean value:
     max_values = [el.item() for el in saved]
     mean_max_probabilities = np.mean(max_values)
@@ -257,66 +329,7 @@ def calc_Delta_metrics(matrix: np.ndarray) -> Tuple[Any, Any]:
     return D_matrix, D_sum_matrix
 
 
-def COV_matrix_frquencies(labels: np.array, ids: np.array, z_: np.array):
-    """
-     Compute the variances of the clusters distribution over the patients.
-
-     Parameters:
-         - z_ (np.array): matrix of variables where each row represents a data point and each column represents a variable.
-         - labels (np.array): vector of labels, where each element corresponds to a data point.
-         - ids (np.array): vector of ids, where each element corresponds to a data point.
-
-     Returns:
-         - Var_SF (list): list of variances of the cluster distribution over the patients.
-         - Var_SF_weighted (list): list of weighted variances of the cluster distribution over the patients.
-         - list_Number_of_element_over_t (list): list of the number of elements of each patient over the clusters.
-     """
-    # Get unique patients IDs
-    patients = np.unique(ids)
-    N_patients = len(patients)
-    # Count the number of elements in each cluster
-    count_by_cluster = np.bincount(labels)
-    K = len(count_by_cluster)
-    # Variances: rispetto al numero di slices di t (t_t) e al numero di slices di k (t_k).
-    frequency_for_patient = list()
-    list_Number_of_element_over_t = list()
-    # Compute a new list that contains z_ samples and labels for each patient.
-    X_for_patient = [z_[[patient == id for id in ids]] for patient in patients]
-    labels_for_patient = [z_[[patient == id for id in ids]] for patient in patients]
-    # Iteration over patients:
-    vars = list()
-    covs = list()
-
-    for t in range(N_patients):
-        # Dataset for patient ( Tensor of slices for patient ID )
-        X_ = X_for_patient[t]
-        # Separation of the patient in different clusters:
-        slices_for_patient = list()
-        list_SF = list()
-        # Iterate clusters:
-        for k in np.unique(labels):
-            # Indexing to find images related to a certain cluster:
-            select_t = [label.item() == k for label in labels_for_patient[t]]
-            if not len(X_[select_t]) == 0 or True:
-                # Frequency between the number of slices of the patient in cluster k and the total number of slices of the patient t:
-                sf_t_t = len(X_[select_t]) / labels_for_patient[t].shape[0]
-                # Save all values in lists, scalable later with tensors or arrays:
-                list_SF.append(sf_t_t)
-                slices_for_patient.append(len(X_[select_t]))
-        frequency_for_patient.append(list_SF)
-        # Normal and weighted variance:
-        # Distribuzione di slices paziente over clusters:
-        list_Number_of_element_over_t.append(slices_for_patient)
-        # Calculate var weighted:
-
-        #var = np.average((list_SF - mean) ** 2, weights=weights[i])
-
-    # Calculate var and covariance
-
-
-
-
-def TF_Variances_ECF(z_: np.array, labels: np.array, ids: np.array) -> Tuple[list, list, list]:
+def TF_Variances_ECF(z_: np.array, labels: np.array, ids: np.array) -> Tuple[Any, Any, Any, Any]:
     """
     Compute the variances of the clusters distribution over the patients.
 
@@ -331,18 +344,19 @@ def TF_Variances_ECF(z_: np.array, labels: np.array, ids: np.array) -> Tuple[lis
         - list_Number_of_element_over_t (list): list of the number of elements of each patient over the clusters.
     """
     # Get unique patients IDs
+    global log_Var_w
     patients = np.unique(ids)
     N_patients = len(patients)
     # Count the number of elements in each cluster
     count_by_cluster = np.bincount(labels)
-    K = len(count_by_cluster)
     # Variances: rispetto al numero di slices di t (t_t) e al numero di slices di k (t_k).
-    Var_SF = list()
-    Var_SF_weighted = list()
+    Var_SF_w = list()
+    Var_log_SF_w = list()
+    Var_SF_100_w = list()
     list_Number_of_element_over_t = list()
     # Compute a new list that contains z_ samples and labels for each patient.
     X_for_patient = [z_[[patient == id for id in ids]] for patient in patients]
-    labels_for_patient = [z_[[patient == id for id in ids]] for patient in patients]
+    labels_for_patient = [labels[[patient == id for id in ids]] for patient in patients]
     # Iteration over patients:
     for t in range(N_patients):
         # Dataset for patient ( Tensor of slices for patient ID )
@@ -350,7 +364,8 @@ def TF_Variances_ECF(z_: np.array, labels: np.array, ids: np.array) -> Tuple[lis
         # Distribuzioni del paziente nei clusters:
         list_Number_of_element = list()
         list_SF = list()
-
+        list_log_SF = list()
+        list_SF_100 = list()
         for k in np.unique(labels):
             # Indexing to find images related to a certain cluster:
             select_t = [label.item() == k for label in labels_for_patient[t]]
@@ -358,19 +373,28 @@ def TF_Variances_ECF(z_: np.array, labels: np.array, ids: np.array) -> Tuple[lis
                 # Frequency between the number of slices of the patient in cluster k and the total number of slices of the patient t:
                 sf_t_t = len(X_[select_t]) / labels_for_patient[t].shape[0]
                 # Save all values in lists, scalable later with tensors or arrays:
-                list_SF.append(sf_t_t)
-                list_Number_of_element.append(len(X_[select_t]))
+                try:
+                    list_SF.append(sf_t_t)
+
+                    list_SF_100.append(sf_t_t*100)
+                    list_Number_of_element.append(len(X_[select_t]))
+                    assert sf_t_t != 0
+                    list_log_SF.append(sf_t_t * 100 * math.log((100 * sf_t_t)))
+                except:
+                    pass
         # Normal and weighted variance:
-        Var ,Var_w = weighted_var(np.array(list_SF), np.array(list_Number_of_element))
-
+        Var_w = weighted_var(np.array(list_SF), np.array(list_Number_of_element))
+        log_Var_w = weighted_var(np.array(list_log_SF), np.array(np.array(list_Number_of_element)[np.nonzero
+                                                                 (list_Number_of_element)]))
+        Var_w_100 = weighted_var(np.array(list_SF_100), np.array(list_Number_of_element))
         # Varianza normale e pesata:
-        Var_SF_weighted.append(Var_w)
-        Var_SF.append(Var)
-
+        Var_SF_w.append(Var_w)
+        Var_log_SF_w.append(log_Var_w)
+        Var_SF_100_w.append(Var_w_100)
         # Distribuzione di slices paziente over clusters:
         list_Number_of_element_over_t.append(list_Number_of_element)
 
-    return Var_SF, Var_SF_weighted, list_Number_of_element_over_t
+    return Var_log_SF_w, Var_SF_w, Var_SF_100_w, list_Number_of_element_over_t
 
 
 def target_distribution(batch):

@@ -3,12 +3,11 @@ import os
 import csv
 
 import numpy as np
-from torch.utils.data import Subset, DataLoader
+from torch.utils.data import Subset
 from util import util_clustering
 from util import util_data
 from util import util_general
 from util import util_plots
-
 from util.util_path import get_next_run_id_local
 from options.test_options import TestOptions
 from util import util_path
@@ -26,6 +25,7 @@ def iterative_evaluation_test():
     # k parameters values
 
     # initialize path manager for test path
+    global CDCC_
     opt.path_man.initialize_test_folders()
 
     # paths for the metrics' files
@@ -48,7 +48,7 @@ def iterative_evaluation_test():
     metrics_file_path = os.path.join(tables_dir, 'DCECs_log_clustering_metrics_over_k.csv')
     Var_gini_file_path = os.path.join(tables_dir, 'DCECs_log_variances_gini_.csv')
     probabilities_file_path = os.path.join(tables_dir, 'DCECs_log_probabilities_over_k.csv')
-
+    Var_new_metrics = os.path.join(tables_dir, 'DCECs_new_metrics.csv')
     # CSV METRICS FILES :
 
     logfile_metrics_end = open(metrics_file_path, 'w')
@@ -66,7 +66,7 @@ def iterative_evaluation_test():
 
     logwriter_variances_gini_end = csv.DictWriter(
         logfile_variances_Gini_csv,
-        fieldnames=['K', 'Var', 'Var_w', 'Gini']
+        fieldnames=['K', 'Var_w', 'Gini']
     )
 
     logwriter_probabilities_end = csv.DictWriter(
@@ -79,9 +79,12 @@ def iterative_evaluation_test():
     logwriter_probabilities_end.writeheader()
     logwriter_variances_gini_end.writeheader()
     dataloader = dataset.dataloader
-    from easydict import EasyDict as edict
-    new_metrics = edict()
 
+
+
+    # N
+    from easydict import EasyDict as edict
+    new_metrics = edict({'VAR_w': list(), 'log_VAR_w': list(), 'VAR_w_100': list()})
 
 
     for k in np.arange(opt.k_0, opt.k_fin + 1):  # outer loop for different model instanced with different cluster number intialization MODEL_k -> MODEL_k+1
@@ -127,9 +130,6 @@ def iterative_evaluation_test():
             indexing = np.linspace(start=0, stop=10000, endpoint=False, num=10, dtype=int)
             train_subset = Subset(dataset.dataset, indexing)
 
-            x_out = None
-            for data in DataLoader(dataset=train_subset):
-                x_out = np.concatenate((x_out, data[0]), 0) if x_out is not None else data[0]
             z_latent = Z_encoded[ordering]
             q_ = Q_encoded[ordering]
             labels = np.array(sorted_df['clusters_labels'])
@@ -160,34 +160,20 @@ def iterative_evaluation_test():
                 threshold=opt.threshold
             )
             # Funzione di calcolo della varianza e della distribuzione delle slices dei pazienti nei clusters:
-            Var_SF, Var_SF_W, list_Number_of_element, = util_clustering.TF_Variances_ECF(
+            log_Var_SF_W, Var_SF_W, Var_SF_100, list_Number_of_element, = util_clustering.TF_Variances_ECF(
                 z_=z_latent,
                 labels=labels,
                 ids=ids_tot
             )
             # first of all try a new alternative to the only variances metric
-
-
-            util_clustering.COV_matrix_frquencies(
-                z_=z_latent,
-                labels=labels,
-                ids=ids_tot
-            )
-
-
-
-
-
-
-
-            """if k == 0:
-                CDCC_ = Metrics_CCDC(
-                    opt=opt,
-                    ids=ids_tot,
-                    labels_Patients=ids_tot
+            new_metrics.VAR_w.append(Var_SF_W)
+            new_metrics.log_VAR_w.append(log_Var_SF_W)
+            new_metrics.VAR_w_100.append(Var_SF_100)
+            if CDCC_ is None:
+                CDCC_ = util_clustering.Metrics_CCDC(
+                    opt=opt
                     )
-            CDCC_.add_new_Clustering_confiuration(labels_clusters=labels).compute_CCDC()
-            """
+            CDCC_.add_new_Clustering_configuration(labels_info=sorted_df)
 
 
             # funzione di calcolo degli indici di Gini, Gini cumulato over k e dervata discreta di Gina na cert
@@ -207,7 +193,6 @@ def iterative_evaluation_test():
             logwriter_variances_gini_end.writerow(
                 dict(
                     K=opt.num_clusters,
-                    Var=Var_SF,
                     Var_w=Var_SF_W,
                     Gini=gini_index_over_t
                 )
@@ -232,13 +217,37 @@ def iterative_evaluation_test():
         # _____________________________________________________________________________________________________________________
         # END ITER K:
     logfile_variances_Gini_csv.close(), logfile_probabilities_csv.close(), logfile_metrics_end.close(),
+    DICE_IOU_NMI_path = os.path.join(plots_dir, 'DICE_IOU_NMI')
+    DICE_IOU_NMI_k_dir = util_general.mkdir(os.path.join(plots_dir, 'DICE_IOU_NMI'))
 
+    import json
+    DICE_similarity_matrix, IOU_similarity_matrix, NMI_matrix = CDCC_.compute_CCDC()
+
+    encoded_row = {line[1].name: np.count_nonzero(line[1].where(line[1] > 0.05, 0)) for line in DICE_similarity_matrix.iterrows()}
+    dict_ = {val: float() for val in np.arange(3, 14)}
+    for key, value in encoded_row.items():
+        dict_[int(key.split('_')[1])] += value
+    # Save Data
+    with open(Var_new_metrics, 'w') as file_metrics:
+        json.dump(new_metrics, file_metrics)
+        file_metrics.close()
+    DICE_similarity_matrix.to_excel(os.path.join(DICE_IOU_NMI_path, 'DICE_matrix_.xlsx'))
+    IOU_similarity_matrix.to_excel(os.path.join(DICE_IOU_NMI_path, 'IOU_matrix_.xlsx'))
+    # saving directories and plots
+    util_plots.plot_informations_over_clusters(
+        data=NMI_matrix,
+        save_dir=DICE_IOU_NMI_k_dir
+    )
     util_plots.plot_metrics_unsupervised_K(
         file=metrics_file_path,
         save_dir=plots_dir
     )
     util_plots.plt_Var_Gini_K(
         file=Var_gini_file_path,
+        save_dir=plots_dir
+    )
+    util_plots.plt_Var_new_metrics(
+        file=Var_new_metrics,
         save_dir=plots_dir
     )
     util_plots.plt_probabilities_NMI(
@@ -321,6 +330,7 @@ if __name__ == '__main__':
     # In this point dataset and dataloader are genereted for the next step
     dataset = create_dataset(opt)
     opt.dataset_size = dataset.__len__()
+    CDCC_ = None
     #  _______________________________________________________________________________________________
     #  _______________________________________________________________________________________________
     #           ITERATIVE EVALUATION/ TEST
