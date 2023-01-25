@@ -69,6 +69,15 @@ class Logger(object):
 
 
 # Function to load yaml configuration file
+def shuffle_and_index(arr):
+    shuffled_index = list(range(len(arr)))
+    random.shuffle(shuffled_index)
+    shuffled_arr = np.array([np.array(arr[i]) for i in shuffled_index])
+    return shuffled_arr, shuffled_index
+
+
+
+
 
 def load_config(config_file, config_directory):
     """

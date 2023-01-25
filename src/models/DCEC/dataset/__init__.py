@@ -1,4 +1,6 @@
 import importlib
+import random
+from util.util_general import shuffle_and_index
 import copy
 import easydict
 from torch.utils.data import Subset
@@ -67,31 +69,47 @@ class CustomDatasetDataLoader():
         self.split_train = 0.9
 
         # ADD a column to track the original order of the dataset
-        self.df_data = self.dataset.data
-        dict_mapper = {id: i for i, id in enumerate(self.df_data.index)}
-        indexing = self.df_data.index.map(dict_mapper)
-        self.df_data.insert(2, "index_number", list(indexing))
-        self.dataset.data = self.df_data
-        # indexing saved
-        self.create_datasets_splitted()
+        try:
+            assert self.opt.dataset_name != 'MNIST'
+            self.df_data = self.dataset.data
+            dict_mapper = {id: i for i, id in enumerate(self.df_data.index)}
+            indexing = self.df_data.index.map(dict_mapper)
+            self.df_data.insert(2, "index_number", list(indexing))
+            self.dataset.data = self.df_data
+            # indexing saved
+            self.create_datasets_splitted()
+        except:
+            print('The Dataset MNIST is loading...')
         self.dataloader = torch.utils.data.DataLoader(
-            self.dataset, batch_size=opt.batch_size,
-            shuffle=opt.shuffle_batches,
-            num_workers=int(opt.num_threads))
+                self.dataset, batch_size=opt.batch_size,
+                shuffle=opt.shuffle_batches,
+                num_workers=int(opt.num_threads))
         self.dataloader_big_batch = torch.utils.data.DataLoader(
-            self.dataset, batch_size=256,
-            shuffle=False,
-            num_workers=int(self.opt.num_threads)
-        )
+                self.dataset, batch_size=256,
+                shuffle=False,
+                num_workers=int(self.opt.num_threads)
+            )
 
     def get_new_indexig(self):
-        print(" New Indexing:",self.dataset.data['index_number'])
-        return np.array(self.dataset.data['index_number']), self.dataset.data['index_number']
+        if self.opt.dataset_name == 'MNIST':
+            return np.array(self.index)
+        print(" New Indexing:", self.dataset.data['index_number'])
+        return np.array(self.dataset.data['index_number'])
 
     def shuffle_data(self):
+        try:
+            assert self.opt.dataset_name != "MNIST"
+            self.dataset.data = self.dataset.data.sample(frac=1, random_state=int(os.environ['PYTHONHASHSEED']))
+            self.df_data = self.dataset.data
+        except:
+            # FOR MNIST
+            shuffled, index = shuffle_and_index(self.dataset.train_data)
+            self.dataset.train_data = shuffled
+            self.dataset.train_labels = np.array([np.array(self.dataset.train_labels[i]) for i in index])
+            self.index = index
+            pass
 
-        self.dataset.data = self.dataset.data.sample(frac=1, random_state=int(os.environ['PYTHONHASHSEED']))
-        self.df_data = self.dataset.data
+
         self.dataloader = torch.utils.data.DataLoader(
             self.dataset, batch_size=self.opt.batch_size,
             shuffle=False,

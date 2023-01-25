@@ -231,7 +231,7 @@ class CLARODataset(BaseDataset):
             )
         parser.add_argument('--box_apply', action='store_true', help='if true, extract sub portion of the image, otherwise it does nothing')
         parser.add_argument('--image_shape', type=int, default=256, help='image dimension')
-        parser.add_argument('--shuffle_interval', type=int, default=0, help='shuffle epochs interval')
+
         return parser
 
     def set_transform(self, transform=None):

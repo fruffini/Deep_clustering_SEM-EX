@@ -9,7 +9,7 @@ cd  /mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX
 
 # Enter bash directory
 cd  /mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/src/models/DCEC/bash
-
+cd
 # Enter DCEC model
 cd  /mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/src/models/DCEC
 

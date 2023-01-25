@@ -63,7 +63,7 @@ class Metrics_CCDC(object):
             matrix = np.zeros([dimension_rows, dimension_cols])
             Columns_DF = list(itertools.chain(*[[f'K_{kj}_{j}' for j in np.arange(0, kj)] for kj in np.arange(min(all_Ks) + 1, max(all_Ks) + 1)]))
             row_DF = list(itertools.chain(*[[f'K_{kj}_{j}' for j in np.arange(0, kj)] for kj in np.arange(min(all_Ks), max(all_Ks))]))
-            Columns_DF_NMI = [f'K_{k}' for k in np.arange(min(all_Ks), max(all_Ks))]
+            Columns_DF_NMI = [f'K_{k}' for k in np.arange(min(all_Ks) + 1, max(all_Ks) + 1)]
             DICE_Similarity_matrix = pd.DataFrame(deepcopy(matrix), columns=Columns_DF, index=row_DF)
             IOU_Similarity_matrix = pd.DataFrame(deepcopy(matrix), columns=Columns_DF, index=row_DF)
             # NMI Matrix computer
@@ -87,14 +87,13 @@ class Metrics_CCDC(object):
                 l_kj = np.unique(lab_kj['clusters_labels'])
                 for l_ki_i in l_ki:
                     # Select the SUB- DATAFRAME for ki and label i
-                    lab_i_i = lab_ki[lab_ki['clusters_labels']== l_ki_i]
+                    lab_i_i = lab_ki[lab_ki['clusters_labels'] == l_ki_i]
                     #
                     for l_kj_j in l_kj:
                         # Select the SUB- DATAFRAME for kj and label j
                         lab_j_j = lab_kj[lab_kj['clusters_labels'] == l_kj_j]
                         # COMPUTE DICE COEFFICIENT AND IOU:
                         IOU_ij, DICE_ij = IOU_DICE(lab_i_i=lab_i_i, lab_j_j=lab_j_j)
-
 
                         # Locate the results:
                         DICE_Similarity_matrix.loc[f'K_{ki}_{l_ki_i}', f'K_{kj}_{l_kj_j}'] = DICE_ij
@@ -105,12 +104,11 @@ class Metrics_CCDC(object):
                         subset=['indexes']
                     )
                     NMI_i_kj = NMI(labels_true=lab_i_i['patient ID'], labels_pred=int_df['clusters_labels_y'])
-                    NMI_matrix.loc[f'K_{kj}_{l_kj_j}', f'K_{ki}'] = NMI_i_kj
+                    NMI_matrix.loc[f'K_{ki}_{l_ki_i}', f'K_{kj}'] = NMI_i_kj
+
             return DICE_Similarity_matrix, IOU_Similarity_matrix, NMI_matrix
         except Exception as e:
             print(e)
-
-
 
 def IOU_DICE(lab_i_i: pd.DataFrame, lab_j_j: pd.DataFrame):
 
@@ -128,14 +126,6 @@ def IOU_DICE(lab_i_i: pd.DataFrame, lab_j_j: pd.DataFrame):
     IOU_i_j = card_int / card_union
 
     return IOU_i_j, DICE_coeff_i_j,
-
-
-
-
-
-
-
-
 
 def metrics_unsupervised_CVI(Z_latent_samples, labels_clusters):
     """
@@ -204,7 +194,7 @@ def weighted_var(values: np.array, weights: np.array) -> np.ndarray:
     Return the weighted average and traditional variance of values.
     values, weights -- Numpy ndarrays with the same shape.
     """
-    mean = np.average(values, weights=weights)
+    mean = np.mean(values)
     # Fast and numerically precise:
     variance_w = np.average((values - mean) ** 2, weights=weights)
     return variance_w

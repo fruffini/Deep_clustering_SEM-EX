@@ -1,7 +1,7 @@
 # Test code for to avaluate
 import os
 import csv
-
+import json
 import numpy as np
 from torch.utils.data import Subset
 from util import util_clustering
@@ -13,7 +13,7 @@ from options.test_options import TestOptions
 from util import util_path
 from dataset import create_dataset
 from models import create_model
-
+import sys
 global model
 global dataset
 import pandas as pd
@@ -38,8 +38,7 @@ def iterative_evaluation_test():
     now = datetime.now()
     date_time = now.strftime("%Y:%m:%d")
     run_name = "{0:05d}--{1}".format(run_id, date_time)
-
-    log_dir_exp = os.path.join(log_path_test, opt.dataset_name, run_name)
+    log_dir_exp = os.path.join(log_path_test, run_name)
     util_general.mkdir(log_dir_exp)
     print('log_dir_exp', log_dir_exp)
     tables_dir = os.path.join(log_dir_exp, 'tables')
@@ -218,25 +217,29 @@ def iterative_evaluation_test():
         # END ITER K:
     logfile_variances_Gini_csv.close(), logfile_probabilities_csv.close(), logfile_metrics_end.close(),
     DICE_IOU_NMI_path = os.path.join(plots_dir, 'DICE_IOU_NMI')
-    DICE_IOU_NMI_k_dir = util_general.mkdir(os.path.join(plots_dir, 'DICE_IOU_NMI'))
+    util_general.mkdir(os.path.join(plots_dir, 'DICE_IOU_NMI'))
 
-    import json
+
+
     DICE_similarity_matrix, IOU_similarity_matrix, NMI_matrix = CDCC_.compute_CCDC()
 
     encoded_row = {line[1].name: np.count_nonzero(line[1].where(line[1] > 0.05, 0)) for line in DICE_similarity_matrix.iterrows()}
-    dict_ = {val: float() for val in np.arange(3, 14)}
+
+    dict_ = {val: float() for val in np.arange(opt.k_0, opt.k_fin)}
     for key, value in encoded_row.items():
         dict_[int(key.split('_')[1])] += value
     # Save Data
     with open(Var_new_metrics, 'w') as file_metrics:
         json.dump(new_metrics, file_metrics)
         file_metrics.close()
+
     DICE_similarity_matrix.to_excel(os.path.join(DICE_IOU_NMI_path, 'DICE_matrix_.xlsx'))
     IOU_similarity_matrix.to_excel(os.path.join(DICE_IOU_NMI_path, 'IOU_matrix_.xlsx'))
     # saving directories and plots
     util_plots.plot_informations_over_clusters(
         data=NMI_matrix,
-        save_dir=DICE_IOU_NMI_k_dir
+        opt=opt,
+        save_dir=DICE_IOU_NMI_path
     )
     util_plots.plot_metrics_unsupervised_K(
         file=metrics_file_path,
@@ -248,15 +251,14 @@ def iterative_evaluation_test():
     )
     util_plots.plt_Var_new_metrics(
         file=Var_new_metrics,
-        save_dir=plots_dir
+        save_dir=plots_dir,
+        opt=opt
     )
     util_plots.plt_probabilities_NMI(
         file=probabilities_file_path,
         save_dir=plots_dir
     )
 
-
-import sys
 
 #--------------------------------------------------------------------------------------------------
 # OPENING FUNCTION CALL: RUN/DEBUG
@@ -265,6 +267,7 @@ def debugging_only():
     print("".center(100, '°'))
     print(" DEBUG MODALITY ".center(100, '°'))
     print("".center(100, '°'))
+    '''
     sys.argv.extend(
             [   '--phase', 'test',
                 '--dataset_name', 'CLARO',
@@ -282,6 +285,24 @@ def debugging_only():
                 '--num_threads', '1',
             ]
         )
+    '''
+    sys.argv.extend(
+            [   '--phase', 'test',
+                '--dataset_name', 'GLOBES_2',
+                '--experiment_name', 'experiments_stage_2',
+                '--reports_dir', '/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/reports',
+                '--config_dir', '/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/configs',
+                '--embedded_dimension', '128',
+                '--AE_type', 'CAE224',
+                '--gpu_ids','0',
+                '--id_exp','ID_1',
+                '--threshold', '95',
+                '--k_0', '2',
+                '--k_fin', '9',
+                '--num_threads', '1',
+            ]
+        )
+
 def running():
     print("".center(100, '*'))
     print(" RUNNING MODALITY ".center(100, '*'))

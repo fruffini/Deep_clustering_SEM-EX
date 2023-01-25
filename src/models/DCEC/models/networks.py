@@ -248,7 +248,8 @@ class Encoder(torch.nn.Module):
         self.opt = opt  # Options for the experiment
         self.arch = self.set_architecture_parameters()  # Architecture
         self.network_info = dict()
-        self.convolutional_layers = self._build_conv_encoder()  # Convolutional layer construction
+        # Convolutional layer construction
+        self.convolutional_layers = self._build_conv_encoder()
         # Set_information:
         self.encoder_shapes = self.set_encoder_information()
         # ______________________________________________________________________________________________________________

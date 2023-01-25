@@ -53,12 +53,12 @@ class MNISTDataset(BaseDataset):
         # Train/Test data images and labels.
         self.train_data, self.train_labels = torch.load(os.path.join(self.root, self.processed_folder, self.training_file))
         self.test_data, self.test_labels = torch.load(os.path.join(self.root, self.processed_folder, self.test_file))
-
-        if self.type == ('full' or 'small'):
+        if self.type == 'normal':
+            self.full = False
+        elif self.type == 'full':
             self.train_data = np.concatenate((self.train_data, self.test_data), axis=0)
             self.train_labels = np.concatenate((self.train_labels, self.test_labels), axis=0)
             self.full = True
-
         if self.type == 'small':
             index = np.floor(opt.perc * (len(self.train_data) + len(self.test_data)))
             self.train_data = self.train_data[0:int(np.floor(index*0.8))]
@@ -79,9 +79,9 @@ class MNISTDataset(BaseDataset):
                 Returns:
                     the modified parser.
                 """
-        parser.add_argument('--mnist_mode', type=str, default='small', choices=['None', 'small', 'full'], help='Dataset loading options.')
+        parser.add_argument('--mnist_mode', type=str, default='small', choices=['normal', 'small', 'full'], help='Dataset loading options.')
         parser.add_argument('--perc', type=float, default=0.1, help='Percentage of dataset')
-        parser.add_argument('--image_shape', type=int, default=32, help='image dimension')
+        parser.add_argument('--image_shape', type=int, default=28, help='image dimension')
 
         return parser
 
@@ -107,9 +107,10 @@ class MNISTDataset(BaseDataset):
 
         # doing this so that it is consistent with all other datasets
         # to return a PIL Image
-        if self.full:
+        if self.full or isinstance(img, np.ndarray):
             img = Image.fromarray(img, mode='L')
         else:
+
             img = Image.fromarray(img.numpy(), mode='L')
 
         if self.transform is not None:

@@ -1,13 +1,16 @@
 # Layer settings for Convolutional-Autoencoder
-CAE2:
-  features_channels: [32, 64]
+CAEMNIST:
+  features_channels: [16, 32, 32]
   kernels:
-  - [5,5]
+  - [3,3]
+  - [3,3]
   - [3,3]
   strides:
   - [2,2]
   - [2,2]
+  - [2,2]
   paddings:
+  - [1,1]
   - [1,1]
   - [1,1]
 

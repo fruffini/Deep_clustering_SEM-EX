@@ -204,15 +204,16 @@ class DCECModel(BaseModel):
             img = 255.0 * img
             img = img.astype(np.uint8)
             img = Image.fromarray(img[0, :, :])
-            if self.opt.dataset_name =='GLOBES':
+            if self.opt.dataset_name != 'MNIST':
                 img.save(
                     fp=os.path.join(path_epoch, f"model_{self.__class__.__name__}_rec_IMG_epoch_{epoch}_IDpatient_{self.y_batch[i]}_{self.id_batch[i]}.tif")
                 )
             else:
 
                 img.save(
-                    fp=os.path.join(path_epoch, f"model_{self.__class__.__name__}_rec_IMG_epoch_{epoch}_IDpatient_{self.y_batch[i]}_{self.id_batch[i]}.tif")
+                    fp=os.path.join(path_epoch, f"model_{self.__class__.__name__}_rec_IMG_epoch_{epoch}_digit _{self.y_batch[i]}.tif")
                 )
+
     def print_metrics(self, epoch) :
         """print current epoch metrics calculated on console and save them in the log direc
 
@@ -289,9 +290,11 @@ class DCECModel(BaseModel):
         tensor = input[0]
         self.x_batch = tensor.type(torch.FloatTensor).to(self.device) # copy
         self.y_batch = input[1]
-        self.id_batch = input[2] if self.opt.dataset_name else None
-        # copy
-
+        try:
+            assert self.opt.dataset_name != 'MNIST'
+            self.id_batch = input[2]
+        except:
+            pass
     def encode(self):
         """Run encoding pass"""
         with torch.no_grad():
@@ -316,11 +319,11 @@ class DCECModel(BaseModel):
         print(" Saving of clusters labels file ".center(100, '|'))
         print("".center(100, '|'))
         # Creation of the labels directory
-        labels_file = os.path.join(self.opt.path_man.get_path('labels_dir'), 'data_clusters_labels_K_%s_.xlsx' %format(str(self.opt.num_clusters)))
+        labels_file = os.path.join(self.opt.path_man.get_path('labels_dir'), 'data_clusters_labels_K_%s_.csv' %format(str(self.opt.num_clusters)))
         data = pd.DataFrame.from_dict(dictionary_data)
-        data.set_index('img ID')
-        with pd.ExcelWriter(labels_file) as writer:
-            data.to_excel(writer, sheet_name='Data_complete')
+        data.set_index('img ID', inplace=True) if self.opt.dataset_name != 'MNIST' else data.set_index('patient ID')
+        # sAVING TO CSV
+        data.to_csv(labels_file)
 
         # Datasets Directory
         Datasets_file = os.path.join(self.opt.path_man.get_path('labels_dir'),'datasets_z_q_K_%s'%format(str(self.opt.num_clusters)) )
@@ -349,15 +352,30 @@ class DCECModel(BaseModel):
             # Predictions labels for each sample
 
             y_pred = q_ij.argmax(1).detach().cpu().numpy()
-
+            # Latent encoded vectors for all the data.
+            a = self.z_encoded_tot.numpy().copy()
+            b = q_ij.detach().cpu().numpy()
+            dict_latent = {f'latent_{dim}': a[:, dim] for dim in np.arange(a.shape[1])}
+            dict_probabilities = {f'q_ij_{dim}': b[:, dim] for dim in np.arange(b.shape[1])}
             # Dictionary to save
-            dict_to_save = {
-                'img ID': [id + '_' + img_id for id, img_id in zip(output['id_patient'], output['image_id'])],
-                'patient ID': output['id_patient'],
-                'image_id': output['image_id'],
-                'clusters_labels': list(y_pred),
-                'indexes': list(indexing[0])
-            }
+            if self.opt.dataset_name == 'MNIST':
+                dict_to_save = {
+                    'patient ID': output['y_out'],
+                    'clusters_labels': list(y_pred),
+                    'indexes': list(indexing),
+                    **dict_latent,
+                    **dict_probabilities
+
+                }
+            else:
+                dict_to_save = {
+                    'img ID': [id + '_' + img_id for id, img_id in zip(output['id_patient'], output['image_id'])],
+                    'patient ID': output['id_patient'],
+                    'image_id': output['image_id'],
+                    'clusters_labels': list(y_pred),
+                    'indexes': list(indexing),
+
+                }
 
             # Datasets to save
             Datasets = {
@@ -374,7 +392,7 @@ class DCECModel(BaseModel):
             print(f' 1) The list of unique labels assigned: {uniques} \n '
                   f' 2) Uniques distribution:  {counts}')
             # For the first updating the labels are given by k-means fitting algorithm
-            y_pred_last = np.copy(self.y_prediction)[indexing[0]]
+            y_pred_last = np.copy(self.y_prediction)[indexing]
             # Setting of the new labels assigned to samples
             self.y_prediction = np.copy(y_pred)
             # check stop criterion
@@ -422,19 +440,15 @@ class DCECModel(BaseModel):
                 self.set_input(data)
 
                 z_latent_batch = self.netE(self.x_batch)  # pass batch of samples to the Encoder
-                print(torch.cuda.current_device())
-                print(
-                    "Outside: input size", self.x_batch.device,
-                    "output_size", z_latent_batch.device
-                )
+
                 # ----------------------------------
                 # Concatenate z latent samples and x samples together
                 x_out = np.concatenate((x_out, data[0]), 0) if x_out is not None else data[0]
                 y_out = np.concatenate((y_out, data[1]), 0) if y_out is not None else data[1]
-                id_out = np.concatenate((id_out, data[2]), 0) if id_out is not None else data[2] if len(data)>1 else None
+                id_out = np.concatenate((id_out, data[2]), 0) if id_out is not None else data[2] if len(data)>2 else None
                 z_latent_out = np.concatenate((z_latent_out, z_latent_batch.cpu().detach().numpy()), 0) if z_latent_out is not None else z_latent_batch.cpu().detach().numpy()
         print("INFO: ---> Encoding done in : ", (time_f - time_0) / 60, '( min. )')
-        return {'id_patient': list(y_out), 'z_latent': torch.from_numpy(z_latent_out), 'x_out': torch.from_numpy(x_out), 'image_id': list(id_out)} if len(data)>1 else {'y_out': list(y_out), 'z_latent': torch.from_numpy(z_latent_out), 'x_out': list(x_out)}
+        return {'id_patient': list(y_out), 'z_latent': torch.from_numpy(z_latent_out), 'x_out': torch.from_numpy(x_out), 'image_id': list(id_out)} if len(data)>2 else {'y_out': list(y_out), 'z_latent': torch.from_numpy(z_latent_out), 'x_out': list(x_out)}
 
     def prepare_training(self, dataset):
         """Procedure to start the training of Deep Convolutional Embeddings Clustering model

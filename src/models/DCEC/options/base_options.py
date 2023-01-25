@@ -51,7 +51,7 @@ class BaseOptions(object):
             help='Alpha coefficient for t-Student probability distribution.')
         parser.add_argument('--rec_type', type=str, default='bce', choices=['mse', 'bce', 'vanilla'], help='Type of '
                                                                                                          'reconstruction loss function.')
-        parser.add_argument('--AE_type', type=str, default='CAE2', choices=['CAE2', 'CAE3', 'CAE512', 'CAE224', 'CAE256'],
+        parser.add_argument('--AE_type', type=str, default='CAE2', choices=['CAEMNIST', 'CAE3', 'CAE512', 'CAE224', 'CAE256'],
             help='type of architecture for the Autoencoder')
         parser.add_argument('--activations', type=str, default='sigmoid', choices=['sigmoid', 'tanh', 'none'],
             help='Activations for Autoencoder.')

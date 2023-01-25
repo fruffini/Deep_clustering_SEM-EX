@@ -142,7 +142,38 @@ def debugging_only():
     print("".center(100, '°'))
     print(" DEBUG MODALITY ".center(100, '°'))
     print("".center(100, '°'))
-
+    # local DEBUGGER
+    if 'Ruffi' in sys.executable:
+        # TRAIN
+        sys.argv.extend(
+            [
+                '--workdir', r'C:\Users\Ruffi\Desktop\Deep_clustering_SEM-EX',
+                '--phase', 'train',
+                '--dataset_name', 'MNIST',
+                '--perc', '0.1',
+                '--mnist_mode', 'normal',
+                '--lr_policy', 'cosine-warmup',
+                '--reports_dir', r'C:\Users\Ruffi\Desktop\Deep_clustering_SEM-EX\reports',
+                '--config_dir', r'C:\Users\Ruffi\Desktop\Deep_clustering_SEM-EX\configs',
+                '--embedded_dimension', '10',
+                '--AE_type', 'CAEMNIST',
+                '--gpu_ids', '0',
+                '--id_exp', 'ID_1',
+                '--k_0', '3',
+                '--k_fin', '14',
+                '--mnist_mode', 'normal',
+                '--n_epochs', '250',
+                '--n_epochs_decay', '250',
+                '--num_threads', '4',
+                '--experiment_name', 'new_experiments',
+                '--shuffle_interval', '1',
+                '--verbose',
+                '--delta_check',
+                '--batch_size', '64',
+                '--lr_tr', '0.001'
+            ]
+        )
+    """
     sys.argv.extend(
         [
             '--workdir', '/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX',
@@ -161,14 +192,14 @@ def debugging_only():
             '--perc', '0.1',
             '--n_epochs_decay', '100',
             '--num_threads', '4',
-            '--experiment_name', 'debug',
-            '--shuffle_interval', '10',
+            '--experiment_name', 'debug_',
             '--verbose',
             '--delta_check',
             '--batch_size', '64',
             '--lr_tr', '0.001'
         ]
     )
+    """
     # CLARO DEBUGGER
     # '--data_dir', '/mimer/NOBACKUP/groups/snic2022-5-277/ltronchin/data',
     # '--box_apply',

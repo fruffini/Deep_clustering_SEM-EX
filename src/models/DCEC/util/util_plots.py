@@ -204,7 +204,7 @@ def plt_Var_Gini_K(file, save_dir):
     # _________________________________________________________________________________________________________________
     # Plot Varianza Pesata
     Delta_Var_w_matrix, D_sum_Var_w_matrix = util_clustering.calc_Delta_metrics(matrix_Var_w)
-    file_name = f"Mean_Var_w_over_k",
+    file_name = f"Mean_Var_w_over_k"
     plt.clf()
     plt.close()
     plt.figure(1, figsize=(25, 12))
@@ -309,22 +309,24 @@ def plt_Var_Gini_K(file, save_dir):
     plt.clf()
 
 
-def plt_Var_new_metrics(file, save_dir):
+def plt_Var_new_metrics(file, save_dir, opt):
 
 
 
     import json
     with open(file, 'r') as file_metrics:
-        dict_ = json.open(file_metrics)
+        dict_ = json.load(file_metrics)
 
     # _________________________________________________________________________________________________________________
     # Plot Var
     # _________________________________________________________________________________________________________________
     key_ = 'VAR_w'
     file_name = f"{key_}_over_k_mean_median"
+    plt.clf()
+    plt.close()
     plt.figure(1, figsize=(25, 12))
     var_ = dict_[key_]
-    K_ = np.arange(3, 15)
+    K_ = np.arange(opt.k_0, opt.k_fin + 1)
     data_mean_all_t = [np.mean(var_in_k) for var_in_k in var_]
     data_median_all_t = [np.median(var_in_k) for var_in_k in var_]
     plt.plot(K_, data_median_all_t, linewidth=3, color='r', label='Median of Var SF')
@@ -336,7 +338,6 @@ def plt_Var_new_metrics(file, save_dir):
     )
     plt.xticks(K_, fontsize=22)
     plt.yticks(fontsize=22)
-    plt.show()
     plt.savefig(os.path.join(save_dir, '{}__.png'.format(file_name)))
     plt.close()
     plt.clf()
@@ -345,9 +346,9 @@ def plt_Var_new_metrics(file, save_dir):
     # _________________________________________________________________________________________________________________
     key_ = 'log_VAR_w'
     file_name = f"{key_}_over_k_mean_median"
-    plt.figure(1, figsize=(25, 12))
+    plt.figure(2, figsize=(25, 12))
     var_ = dict_[key_]
-    K_ = np.arange(3, 15)
+    K_ = np.arange(opt.k_0, opt.k_fin + 1)
     data_mean_all_t = [np.mean(var_in_k) for var_in_k in var_]
     data_median_all_t = [np.median(var_in_k) for var_in_k in var_]
     plt.plot(K_, data_median_all_t, linewidth=3, color='r', label='Median of Var SF')
@@ -367,9 +368,9 @@ def plt_Var_new_metrics(file, save_dir):
     # _________________________________________________________________________________________________________________
     key_ = 'VAR_w_100'
     file_name = f"{key_}_over_k_mean_median"
-    plt.figure(1, figsize=(25, 12))
+    plt.figure(3, figsize=(25, 12))
     var_ = dict_[key_]
-    K_ = np.arange(3, 15)
+    K_ = np.arange(opt.k_0, opt.k_fin + 1)
     data_mean_all_t = [np.mean(var_in_k) for var_in_k in var_]
     data_median_all_t = [np.median(var_in_k) for var_in_k in var_]
     plt.plot(K_, data_median_all_t, linewidth=3, color='r', label='Median of Var SF')
@@ -385,9 +386,9 @@ def plt_Var_new_metrics(file, save_dir):
     plt.close()
     plt.clf()
 
-def plot_informations_over_clusters(data, save_dir):
+def plot_informations_over_clusters(data, opt, save_dir):
     plt.figure(figsize=(20, 9))
-    x_range = np.arange(3, 14)
+    x_range = np.arange(opt.k_0, opt.k_fin)
     file_name = 'NMI_interK_'
     plt.suptitle(
         f'Plot of NMI between Clusters configuration with three different means: \n'
@@ -408,6 +409,8 @@ def plot_informations_over_clusters(data, save_dir):
     plt.yticks(color='k', fontsize=15)
     plt.grid()
     plt.savefig(os.path.join(save_dir, '{}___.png'.format(file_name)))
+    plt.close()
+    plt.clf()
 
 
 
@@ -445,7 +448,7 @@ def plot_metrics_unsupervised_EXPs_mean_var(data, save_dir, Ks):
         import numpy as np
         np.harmoni
 def plot_metrics_unsupervised_K(file, save_dir):
-    file_name = f"Metrics_Unsupervised_over_k",
+    file_name = f"Metrics_Unsupervised_over_k"
     data = pd.read_csv(file)
     keys = data.keys()
     K_ = data[keys[0]]
