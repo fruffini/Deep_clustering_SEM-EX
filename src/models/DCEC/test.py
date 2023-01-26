@@ -3,7 +3,6 @@ import os
 import csv
 import json
 import numpy as np
-from torch.utils.data import Subset
 from util import util_clustering
 from util import util_data
 from util import util_general
@@ -11,7 +10,7 @@ from util import util_plots
 from util.util_path import get_next_run_id_local
 from options.test_options import TestOptions
 from util import util_path
-from dataset import create_dataset
+from dataset import *
 from models import create_model
 import sys
 global model
@@ -36,7 +35,7 @@ def iterative_evaluation_test():
     log_path_test = os.path.join(save_dir, 'test_run')
     run_id = get_next_run_id_local(log_path_test, opt.phase)  # GET run id
     now = datetime.now()
-    date_time = now.strftime("%Y:%m:%d")
+    date_time = now.strftime("%Y_%m_%d")
     run_name = "{0:05d}--{1}".format(run_id, date_time)
     log_dir_exp = os.path.join(log_path_test, run_name)
     util_general.mkdir(log_dir_exp)
@@ -84,7 +83,7 @@ def iterative_evaluation_test():
     # N
     from easydict import EasyDict as edict
     new_metrics = edict({'VAR_w': list(), 'log_VAR_w': list(), 'VAR_w_100': list()})
-
+    Separated_Data = edict()
 
     for k in np.arange(opt.k_0, opt.k_fin + 1):  # outer loop for different model instanced with different cluster number intialization MODEL_k -> MODEL_k+1
         #  _______________________________________________________________________________________________
@@ -92,7 +91,7 @@ def iterative_evaluation_test():
             f"\n _______________________________________________________________________________________________ "
             f"\n INFORMATION: the current number of clusters is {k} "
             f"\n _______________________________________________________________________________________________"
-            )
+        )
         #  _______________________________________________________________________________________________
         # Model selection and setup
         opt.num_clusters = k  # set the number of clusters.
@@ -104,7 +103,6 @@ def iterative_evaluation_test():
                 f"\n INFORMATION: the DCEC model with K = {k} has been loaded.  "
                 f"\n _______________________________________________________________________________________________"
             )
-            import deepdish as dd
             # Compute encoded samples
             labels_dir = os.path.join(model.load_dir, 'labels')
             labels_file = os.path.join(labels_dir, 'data_clusters_labels_K_{0}_.xlsx'.format(k))
@@ -126,8 +124,6 @@ def iterative_evaluation_test():
             Q_encoded = datasets_z_q['Q_Dataset']
 
             # sort other vectors loaded inside this script file
-            indexing = np.linspace(start=0, stop=10000, endpoint=False, num=10, dtype=int)
-            train_subset = Subset(dataset.dataset, indexing)
 
             z_latent = Z_encoded[ordering]
             q_ = Q_encoded[ordering]
@@ -143,6 +139,18 @@ def iterative_evaluation_test():
             util_general.mkdir(plots_dir_labels_images)
             # Plot Clusters Examples
 
+            # Create the dataset separated by cluster label
+            Dataset_k = separate_dataset_by_label(opt, labels_info)
+            clustering_K = k
+            Separated_Data[f'K_{clustering_K}'] = Dataset_k
+            for Dataset_label, Dataset in Dataset_k.get_labels_dict().items():
+                util_plots.plot_label_examples(Dataset, clustering_k=clustering_K, save_dir=plots_dir_labels_images, Label_selected=Dataset_label.split('_')[-1], number_to_plot=12)
+
+
+
+
+
+
             # Metrics Computation
             computed_metrics = util_clustering.metrics_unsupervised_CVI(Z_latent_samples=z_latent, labels_clusters=labels)
 
@@ -150,8 +158,7 @@ def iterative_evaluation_test():
             CH_score = computed_metrics['Calinski-Harabasz score']
             DB_score = computed_metrics['Davies-Douldin score']
 
-            soft_label_mean_assegnation_score, avarage_P_prototypes, Mutual_information_score, indices_th, P_for_cluster \
-                = util_clustering.compute_probabilities_variables(
+            soft_label_mean_assegnation_score, avarage_P_prototypes, Mutual_information_score, indices_th, P_for_cluster  = util_clustering.compute_probabilities_variables(
                 labels=labels,
                 ids=ids_tot,
                 probability=q_,
@@ -171,9 +178,8 @@ def iterative_evaluation_test():
             if CDCC_ is None:
                 CDCC_ = util_clustering.Metrics_CCDC(
                     opt=opt
-                    )
+                )
             CDCC_.add_new_Clustering_configuration(labels_info=sorted_df)
-
 
             # funzione di calcolo degli indici di Gini, Gini cumulato over k e dervata discreta di Gina na cert
             gini_index_over_t, gini_cumulative = util_clustering.compute_GINI(list_distribution=list_Number_of_element)
@@ -219,9 +225,7 @@ def iterative_evaluation_test():
     DICE_IOU_NMI_path = os.path.join(plots_dir, 'DICE_IOU_NMI')
     util_general.mkdir(os.path.join(plots_dir, 'DICE_IOU_NMI'))
 
-
-
-    DICE_similarity_matrix, IOU_similarity_matrix, NMI_matrix = CDCC_.compute_CCDC()
+    DICE_similarity_matrix, IOU_similarity_matrix, NMI_matrix, Adj_NMI_matrix, Cluster_Dimensions = CDCC_.compute_CCDC()
 
     encoded_row = {line[1].name: np.count_nonzero(line[1].where(line[1] > 0.05, 0)) for line in DICE_similarity_matrix.iterrows()}
 
@@ -233,13 +237,25 @@ def iterative_evaluation_test():
         json.dump(new_metrics, file_metrics)
         file_metrics.close()
 
-    DICE_similarity_matrix.to_excel(os.path.join(DICE_IOU_NMI_path, 'DICE_matrix_.xlsx'))
-    IOU_similarity_matrix.to_excel(os.path.join(DICE_IOU_NMI_path, 'IOU_matrix_.xlsx'))
+    # Matrix Savings
+    DICE_similarity_matrix.to_excel(os.path.join(DICE_IOU_NMI_path, f'DICE_matrix_{opt.dataset_name}.xlsx'))
+    IOU_similarity_matrix.to_excel(os.path.join(DICE_IOU_NMI_path, f'IOU_matrix_{opt.dataset_name}.xlsx'))
+    NMI_matrix.to_excel(os.path.join(DICE_IOU_NMI_path, f'NMI_matrix_{opt.dataset_name}.xlsx'))
+    Adj_NMI_matrix.to_excel(os.path.join(DICE_IOU_NMI_path, f'Adj_NMI_matrix_{opt.dataset_name}.xlsx'))
+    Cluster_Dimensions.to_excel(os.path.join(DICE_IOU_NMI_path, f'Cluster_Dims_matrix_{opt.dataset_name}.xlsx'))
     # saving directories and plots
+
     util_plots.plot_informations_over_clusters(
         data=NMI_matrix,
         opt=opt,
-        save_dir=DICE_IOU_NMI_path
+        save_dir=DICE_IOU_NMI_path,
+        head='NMI'
+    )
+    util_plots.plot_informations_over_clusters(
+        data=Adj_NMI_matrix,
+        opt=opt,
+        save_dir=DICE_IOU_NMI_path,
+        head='Adj_NMI'
     )
     util_plots.plot_metrics_unsupervised_K(
         file=metrics_file_path,
@@ -254,13 +270,15 @@ def iterative_evaluation_test():
         save_dir=plots_dir,
         opt=opt
     )
+    """
     util_plots.plt_probabilities_NMI(
         file=probabilities_file_path,
         save_dir=plots_dir
     )
+    """
 
 
-#--------------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
 # OPENING FUNCTION CALL: RUN/DEBUG
 
 def debugging_only():
@@ -271,7 +289,7 @@ def debugging_only():
     sys.argv.extend(
             [   '--phase', 'test',
                 '--dataset_name', 'CLARO',
-                '--data_dir', '/mimer/NOBACKUP/groups/snic2022-5-277/ltronchin/data',
+                
                 '--experiment_name', 'experiments_stage_2',
                 '--reports_dir', '/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/reports',
                 '--config_dir', '/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/configs',
@@ -290,8 +308,9 @@ def debugging_only():
             [   '--phase', 'test',
                 '--dataset_name', 'GLOBES_2',
                 '--experiment_name', 'experiments_stage_2',
-                '--reports_dir', '/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/reports',
-                '--config_dir', '/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/configs',
+                '--data_dir', r'C:\Users\Ruffi\Desktop\Deep_clustering_SEM-EX\src\models\DCEC\data',
+                '--reports_dir', r'C:\Users\Ruffi\Desktop\Deep_clustering_SEM-EX\reports',
+                '--config_dir', r'C:\Users\Ruffi\Desktop\Deep_clustering_SEM-EX\configs',
                 '--embedded_dimension', '128',
                 '--AE_type', 'CAE224',
                 '--gpu_ids','0',
@@ -325,8 +344,7 @@ if __name__ == '__main__':
     Option = TestOptions()  # test options
     opt = Option.parse()
     # Experiment Options
-
-    opt.img_shape = (224, 224) if opt.dataset_name == "CLARO" else (28, 28)
+    opt.phase = 'test'
     #  _______________________________________________________________________________________________
     # Submit run:
     print("Submit run")
@@ -357,4 +375,17 @@ if __name__ == '__main__':
     #           ITERATIVE EVALUATION/ TEST
     #  _______________________________________________________________________________________________
     #  _______________________________________________________________________________________________
-    iterative_evaluation_test()
+    try:
+        iterative_evaluation_test()
+        # Raising KeyboardInterruption
+        raise KeyboardInterrupt
+    except KeyboardInterrupt:
+        print("Program terminated manually!")
+        raise SystemExit
+
+
+
+
+
+
+

@@ -8,8 +8,9 @@ from easydict import EasyDict as edict
 import numpy as np
 import torch
 from sklearn.cluster import KMeans
-from sklearn.metrics import silhouette_score, calinski_harabasz_score, davies_bouldin_score, adjusted_mutual_info_score
+from sklearn.metrics import silhouette_score, calinski_harabasz_score, davies_bouldin_score
 from sklearn.metrics.cluster import normalized_mutual_info_score as NMI
+from sklearn.metrics.cluster import adjusted_mutual_info_score as ADJ_NMI
 from tqdm import tqdm
 import itertools
 """Unsupervised Metrics script
@@ -59,26 +60,41 @@ class Metrics_CCDC(object):
             dimension_rows = sum([el for el in all_Ks[:-1]])
             dimension_cols = sum([el for el in all_Ks[1:]])
 
-            # Dataframe Creation
+            # Dataframes Creation
             matrix = np.zeros([dimension_rows, dimension_cols])
             Columns_DF = list(itertools.chain(*[[f'K_{kj}_{j}' for j in np.arange(0, kj)] for kj in np.arange(min(all_Ks) + 1, max(all_Ks) + 1)]))
             row_DF = list(itertools.chain(*[[f'K_{kj}_{j}' for j in np.arange(0, kj)] for kj in np.arange(min(all_Ks), max(all_Ks))]))
             Columns_DF_NMI = [f'K_{k}' for k in np.arange(min(all_Ks) + 1, max(all_Ks) + 1)]
             DICE_Similarity_matrix = pd.DataFrame(deepcopy(matrix), columns=Columns_DF, index=row_DF)
             IOU_Similarity_matrix = pd.DataFrame(deepcopy(matrix), columns=Columns_DF, index=row_DF)
+
             # NMI Matrix computer
             matrix_NMI = np.zeros([dimension_rows, len(Columns_DF_NMI)])
             NMI_matrix = pd.DataFrame(deepcopy(matrix_NMI), columns=Columns_DF_NMI, index=row_DF)
+            Adj_NMI_matrix = pd.DataFrame(deepcopy(matrix_NMI), columns=Columns_DF_NMI, index=row_DF)
+
             # Setting the firts K where to start (i):
             k_rows = np.arange(min(all_Ks), max(all_Ks))
             k_cols = np.arange(min(all_Ks) + 1, max(all_Ks) + 1)
-            list_NMI = list()
+
+            # Saving the number of datapoint for each Cluster
+            Columns_DF_nums = list(itertools.chain(*[[f'K_{kj}_{j}' for j in np.arange(0, kj)] for kj in np.arange(min(all_Ks), max(all_Ks) + 1)]))
+            row_DF_ks = [f'K_{kj}' for kj in np.arange(min(all_Ks), max(all_Ks)+1)]
+            matrix_nums = np.zeros([row_DF_ks.__len__(), Columns_DF_nums.__len__()])
+            Clusters_Dimension_Matrix = pd.DataFrame(deepcopy(matrix_nums), columns=Columns_DF_nums, index=row_DF_ks, dtype=np.int32)
+            for row in Clusters_Dimension_Matrix.iterrows():
+                Labels_k = self.labels_for_each_K[row[0]]
+                l_k, counts_by_label = np.unique(Labels_k['clusters_labels'], return_counts=True)
+                for label_k, count in zip(l_k, counts_by_label):
+                    Clusters_Dimension_Matrix.loc[row[0], f'{row[0]}_{label_k}'] = count
+
+                print(row)
             for ki, kj in zip(k_rows, k_cols):
                 # ------------- ROW ---------------
                 # Select the configuration of cluster with K = i:
                 lab_ki = self.labels_for_each_K['K_{0}'.format(ki)]
                 # Create a vector for each cluster
-                l_ki = np.unique(lab_ki['clusters_labels'])
+                l_ki, counts_by_label = np.unique(lab_ki['clusters_labels'], return_counts=True)
 
                 # ------------- COL ---------------
                 # Select the configuration of cluster with K = j:
@@ -104,19 +120,21 @@ class Metrics_CCDC(object):
                         subset=['indexes']
                     )
                     NMI_i_kj = NMI(labels_true=lab_i_i['patient ID'], labels_pred=int_df['clusters_labels_y'])
+                    Adj_NMI_i_kj = ADJ_NMI(labels_true=lab_i_i['patient ID'], labels_pred=int_df['clusters_labels_y'])
                     NMI_matrix.loc[f'K_{ki}_{l_ki_i}', f'K_{kj}'] = NMI_i_kj
+                    Adj_NMI_matrix.loc[f'K_{ki}_{l_ki_i}', f'K_{kj}'] = Adj_NMI_i_kj
 
-            return DICE_Similarity_matrix, IOU_Similarity_matrix, NMI_matrix
+            return DICE_Similarity_matrix, IOU_Similarity_matrix, NMI_matrix, Adj_NMI_matrix, Clusters_Dimension_Matrix
         except Exception as e:
             print(e)
 
 def IOU_DICE(lab_i_i: pd.DataFrame, lab_j_j: pd.DataFrame):
 
     # Intesection between two Dataframe
-    int_df = pd.merge(lab_i_i, lab_j_j, how ='inner', on =['image_id'])
+    int_df = pd.merge(lab_i_i, lab_j_j, how='inner', on=['indexes'])
     card_int = int_df.shape[0]
     # Union over two dataframes
-    union_df = pd.concat([lab_i_i, lab_j_j]).drop_duplicates(subset=['indexes'])
+    union_df = pd.merge(lab_i_i, lab_j_j, how='outer', on=['indexes'])
     card_union = union_df.shape[0]
     # Card over the two subsets
     cards_i_j = lab_i_i.shape[0] + lab_j_j.shape[0]

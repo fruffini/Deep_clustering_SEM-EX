@@ -123,6 +123,10 @@ def loader(img_path, img_dim):
     img = img.unsqueeze(0)
     return img
 
+
+
+
+
 class GLOBESDataset(BaseDataset):
     """` Custom Dataset for the validation of the extraction framework of SEM-EX
     Args:
@@ -226,3 +230,20 @@ class GLOBESDataset(BaseDataset):
         tmp = '    Target Transforms (if any): '
         fmt_str += '{0}{1}'.format(tmp, self.target_transform.__repr__().replace('\n', '\n' + ' ' * len(tmp)))
         return fmt_str
+
+
+class GLOBESDatasetLabels(GLOBESDataset):
+    def __init__(self, opt, labels_dataset: pd.DataFrame):
+        GLOBESDataset.__init__(self, opt)
+        # Load the single label dataset
+        self.k_ = opt.num_clusters
+        self.data = labels_dataset.copy(deep=True).set_index("img ID").drop(columns='Unnamed: 0')
+
+
+
+
+
+
+
+
+

@@ -275,3 +275,9 @@ class CLARODataset(BaseDataset):
         return x, patient_id, complete_id
 
 
+class CLARODatasetLabels(CLARODataset):
+    def __init__(self, opt, labels_dataset: pd.DataFrame):
+        CLARODataset.__init__(self, opt)
+        # Load the single label dataset
+        self.k_ = opt.num_clusters
+        self.data = labels_dataset.copy(deep=True).set_index("img ID")

@@ -4,6 +4,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import os
+
+import torch.utils.data
+
 from util import util_clustering
 
 
@@ -386,12 +389,12 @@ def plt_Var_new_metrics(file, save_dir, opt):
     plt.close()
     plt.clf()
 
-def plot_informations_over_clusters(data, opt, save_dir):
+def plot_informations_over_clusters(data, opt, save_dir, head):
     plt.figure(figsize=(20, 9))
     x_range = np.arange(opt.k_0, opt.k_fin)
-    file_name = 'NMI_interK_'
+    file_name = f'{head}_interK_'
     plt.suptitle(
-        f'Plot of NMI between Clusters configuration with three different means: \n'
+        f'Plot of {head} between Clusters configuration with three different means: \n'
         f' Arithmetic, Harmonic, Median. ', fontsize=25, y=0.99
         ,
         fontweight="bold"
@@ -479,24 +482,24 @@ def plot_metrics_unsupervised_K(file, save_dir):
         plt.close()
 
 
-def show_labeled_data(X_l_sel, select_label, ids_lab_sel, save_dir, file_name, number_to_plot=25):
+def plot_label_examples(Dataset, save_dir, Label_selected, clustering_k, number_to_plot=9):
     import math
-    len_ = len(X_l_sel)
-    plt.clf()
-    number_to_plot = number_to_plot if not len_ <= number_to_plot else len_
-    if not len_ == 0:
-        step_ = len_ // number_to_plot
-        fig = plt.figure(figsize=(10, 10))
-        rows = math.ceil(math.sqrt(number_to_plot))
-        columns = math.ceil(math.sqrt(number_to_plot))
-        to_plot = np.arange(0, len_, step_)
-        fig.suptitle(f'Plotted Images for Label Selected = {select_label + 1}')
-        for i in range(0, number_to_plot):
-            fig.add_subplot(rows, columns, i + 1)
-            plt.imshow(X_l_sel[to_plot[i]], cmap='gray')
-            plt.axis('off')
-            plt.title(ids_lab_sel[to_plot[i]])
-        fig.savefig(os.path.join(save_dir, '{}_label_sel_{}___.png'.format(file_name, select_label + 1)))
-        plt.close(fig)
-    else:
-        print("Empty_CLuster")
+    number_to_plot = 16
+    subDataset_label = torch.utils.data.Subset(Dataset, range(0, number_to_plot))
+    Dataloader_label = torch.utils.data.DataLoader(
+        subDataset_label,
+        num_workers=2
+    )
+    fig = plt.figure(figsize=(10, 10))
+    rows = math.ceil(math.sqrt(number_to_plot))
+    columns = math.ceil(math.sqrt(number_to_plot))
+    fig.suptitle(f'CLustering Parameter K = {clustering_k} \n Plotted Images for Label Selected = {Label_selected}', fontsize=22, color='r')
+    for i, Data in enumerate(Dataloader_label):
+        Image = Data[0][0]
+        ID = Data[1][0]
+        fig.add_subplot(rows, columns, i + 1)
+        fig.axes[i].set_title(ID, loc='center', fontsize=14)
+        plt.imshow(Image[0, :, :], cmap='gray')
+        plt.axis('off')
+    fig.savefig(os.path.join(save_dir, 'Examples_label_sel_{}_k_{}___.png'.format(Label_selected, clustering_k)))
+    plt.close()

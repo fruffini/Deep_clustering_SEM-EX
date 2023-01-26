@@ -24,6 +24,11 @@ cd  /mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/src/models/DCEC
 # bash launch
 cd  /mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/src/models/DCEC/bash
 # in this folder launch
+cd /mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/src/models/DCEC/bash/new_set_of_experiment/CLARO
+cd /mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/src/models/DCEC/bash/new_set_of_experiment/MNIST
+
+
+
 
 #Pretrain
 sbatch pretrain_run.sh

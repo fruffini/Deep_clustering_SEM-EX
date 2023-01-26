@@ -1,5 +1,8 @@
 import importlib
 import random
+
+import pandas as pd
+
 from util.util_general import shuffle_and_index
 import copy
 import easydict
@@ -8,7 +11,7 @@ import numpy as np
 import torch
 import os
 from .base_dataset import BaseDataset
-def find_dataset_using_name(dataset_name):
+def find_dataset_using_name(dataset_name, target_suffix=None):
     """Import the module "data/[dataset_name]_dataset.py".
 
     In the file, the class called DatasetNameDataset() will
@@ -23,7 +26,7 @@ def find_dataset_using_name(dataset_name):
     datasetlib = importlib.import_module(dataset_filename)
 
     dataset = None
-    target_dataset_name = dataset_load.replace('_', '') + 'dataset'
+    target_dataset_name = dataset_load.replace('_', '') + 'dataset' if target_suffix is None else dataset_load + target_suffix
     for name, cls in datasetlib.__dict__.items():
         if name.lower() == target_dataset_name.lower() \
            and issubclass(cls, BaseDataset):
@@ -37,14 +40,40 @@ def get_option_setter(dataset_name):
     """Return the static method <modify_commandline_options> of the dataset class."""
     dataset_class = find_dataset_using_name(dataset_name)
     return dataset_class.modify_commandline_options
+
+
 def create_dataset(opt):
     """Create dataset given options in input
     This function wraps the class custom data loader
-
-
     """
     data_loader = CustomDatasetDataLoader(opt=opt)
     return data_loader.load_data()
+
+
+def separate_dataset_by_label(opt, labels_info):
+    """Create dataset given options in input
+    This function wraps the class custom data loader
+    """
+    return DatasetLabelsDataLoader(opt=opt, labels_info=labels_info)
+
+
+class DatasetLabelsDataLoader(object):
+    def __init__(self, opt, labels_info: pd.DataFrame):
+        self.opt = opt
+        if 'GLOBES' in opt.dataset_name:
+            dataset_load = 'GLOBES'
+        else:
+            dataset_load = opt.dataset_name
+        target_class = 'labels'
+
+        dataset_class = find_dataset_using_name(dataset_load, target_suffix=f'dataset{target_class}')
+        self.datasets_by_label = dict()
+        for k_ in np.arange(self.opt.num_clusters):
+            print('INFO: Label : ', k_, 'Separated from dataset', dataset_load)
+            label_k_dataset = labels_info[labels_info['clusters_labels'] == k_]
+            self.datasets_by_label['Dataset_label_{}'.format(k_)] = dataset_class(opt, label_k_dataset)
+    def get_labels_dict(self):
+        return self.datasets_by_label
 
 
 class CustomDatasetDataLoader():

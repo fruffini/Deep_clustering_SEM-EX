@@ -1,5 +1,6 @@
 import numpy as np
 import math
+import pandas as pd
 def mean_var_over_Exps(list_exps, columns):
     a = dict()
     for column in columns[1:]:

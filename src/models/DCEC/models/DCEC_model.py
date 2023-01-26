@@ -424,6 +424,7 @@ class DCECModel(BaseModel):
     def load_model_trained(self):
         """Ths function guarantees to load the weights trained for Encoder, Decoder and Clustering layer."""
         load_suffix = 'iter_%s' % (str(self.opt.load_iter)) if self.opt.load_iter >0 else 'latest'
+
         return self.load_networks(epoch=load_suffix, path_ext=self.get_path_phase("weights_dir", phase="train"))
 
     def compute_encoded(self, dataloader):

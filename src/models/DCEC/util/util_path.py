@@ -144,6 +144,7 @@ class PathManager(object):
                 name (str): name of the path attribute in the dictionary
 
         """
+        print(self.paths)
         return self.paths.__getattribute__(phase).__getattribute__(name)
     def get_main_path(self):
         """

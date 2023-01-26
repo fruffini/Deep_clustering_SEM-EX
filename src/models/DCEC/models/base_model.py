@@ -73,7 +73,6 @@ class BaseModel(ABC):
 
     def get_path_phase(self, name, phase=None):
         """Function to generate tree off folders to save experiments"""
-
         return self.opt.path_man.get_path(name=name) if phase is None else self.opt.path_man.get_path_phase(name=name, phase=phase)
 
     def get_current_losses(self):
