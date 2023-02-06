@@ -23,8 +23,7 @@ source bin/activate
 cd /mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/src/models/DCEC
 
 
-
-dat='/mimer/NOBACKUP/groups/snic2022-5-277/ltronchin/data'
+dat='/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/src/models/DCEC/data'
 rep='/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/reports'
 cof='/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/configs'
 workdir='/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX'
@@ -37,11 +36,11 @@ ID=$1
 
 
 # Net configurations
-dataset='CLARO'
-arch='CAE256'
+dataset='MNIST'
+arch='CAEMNIST'
 phase='test'
 # Parameters for training
-emb=128
+emb=10
 str_ids='0' # we use only two GPUs
 # ID string for the experiment
 ID=$1

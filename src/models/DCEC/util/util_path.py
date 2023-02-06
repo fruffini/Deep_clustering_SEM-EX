@@ -91,6 +91,7 @@ class PathManager(object):
 
     def initialize_test_folders(self):
         directories = ['tables', 'plots']
+
         list(map(util_general.mkdir, [os.path.join(self.get_path('save_dir'), dir) for dir in directories]))
         for dir, path in zip(sorted(directories), filter(os.path.isdir, os.scandir(self.get_path('save_dir')))):
             self.set_dir(dir_to_extend="%s" % 'save_dir', path_ext=dir)
@@ -158,6 +159,7 @@ class PathManager(object):
                 name (str): name of the path attribute in the dictionary
 
         """
+        print(self.dict_phase)
         return self.dict_phase.__getattribute__(name)
     def exp_name_assignment(self):
 

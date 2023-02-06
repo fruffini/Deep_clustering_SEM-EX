@@ -106,10 +106,16 @@ def iterative_evaluation_test():
             # Compute encoded samples
             labels_dir = os.path.join(model.load_dir, 'labels')
             labels_file = os.path.join(labels_dir, 'data_clusters_labels_K_{0}_.xlsx'.format(k))
+            # load labels information
+            if not os.path.exists(labels_file) and k == 16 and k == 17:
+                labels_file = os.path.join(labels_dir, 'data_clusters_labels_K_{0}_.csv'.format(k))
+                labels_info = pd.read_csv(labels_file)
+            else:
+                labels_info = pd.read_excel(labels_file)
             compressed_encoded_file = os.path.join(labels_dir, 'datasets_z_q_K_{}.npz'.format(k))
 
-            # load labels information
-            labels_info = pd.read_excel(labels_file)
+
+
 
             # Sort the dataframe by column 'A'
             sorted_df = labels_info.sort_values(by='indexes')
@@ -306,18 +312,17 @@ def debugging_only():
     '''
     sys.argv.extend(
             [   '--phase', 'test',
-                '--dataset_name', 'GLOBES_2',
+                '--dataset_name', 'MNIST',
                 '--experiment_name', 'experiments_stage_2',
-                '--data_dir', r'C:\Users\Ruffi\Desktop\Deep_clustering_SEM-EX\src\models\DCEC\data',
                 '--reports_dir', r'C:\Users\Ruffi\Desktop\Deep_clustering_SEM-EX\reports',
                 '--config_dir', r'C:\Users\Ruffi\Desktop\Deep_clustering_SEM-EX\configs',
-                '--embedded_dimension', '128',
-                '--AE_type', 'CAE224',
+                '--embedded_dimension', '10',
+                '--AE_type', 'CAEMNIST',
                 '--gpu_ids','0',
                 '--id_exp','ID_1',
                 '--threshold', '95',
-                '--k_0', '2',
-                '--k_fin', '9',
+                '--k_0', '3',
+                '--k_fin', '10',
                 '--num_threads', '1',
             ]
         )
@@ -344,7 +349,6 @@ if __name__ == '__main__':
     Option = TestOptions()  # test options
     opt = Option.parse()
     # Experiment Options
-    opt.phase = 'test'
     #  _______________________________________________________________________________________________
     # Submit run:
     print("Submit run")

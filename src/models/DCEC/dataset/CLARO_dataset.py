@@ -251,9 +251,14 @@ class CLARODataset(BaseDataset):
         # Select sample
         row = self.data.iloc[index]
         row_name = row.name.split('_')
-        img_id = row_name[1]
-        complete_id = row.name
-        patient_id = row_name[0]
+        if row_name.__len__() > 2:
+            img_id = row_name[2]
+            patient_id = row_name[1]
+            complete_id = row.name[1] + '_' + row_name[2]
+        else:
+            img_id = row_name[1]
+            complete_id = row.name
+            patient_id = row_name[0]
         # load box
         box = self.boxes[patient_id + '_' + img_id] if self.boxes else None
         # Load data and get label

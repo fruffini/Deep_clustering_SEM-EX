@@ -56,8 +56,9 @@ def train():
     epoch_counter = 0
     updated_target = False
     for epoch in range(opt.epoch_count, opt.n_epochs + opt.n_epochs_decay + 1):  # outer loop for different epochs
-
+        # Long Interval Between Epochs
         if epoch_counter % opt.shuffle_interval == 0 and opt.shuffle_interval != 0:
+            model.save_image_reconstructed(epoch=epoch)
             dataset.shuffle_data()
             delta_bool = model.update_target(dataloader=dataset.dataloader_big_batch, indexing=dataset.get_new_indexig())
             updated_target = True
@@ -93,7 +94,7 @@ def train():
                 print('saving the latest model (epoch %d, total_iters %d)' % (epoch, total_iters), )
                 save_suffix = 'iter_%d_epoch_%d' % (total_iters, epoch) if opt.save_by_iter else 'latest'
                 model.save_networks(save_suffix)
-                model.save_image_reconstructed(epoch=epoch)
+
         model.print_current_losses(epoch=epoch, iters=epoch_iter)
         model.reset_accumulator()
         epoch_counter += 1

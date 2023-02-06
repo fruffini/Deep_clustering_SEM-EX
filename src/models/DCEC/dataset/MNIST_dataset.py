@@ -7,6 +7,7 @@ import errno
 import codecs
 from easydict import EasyDict as edict
 from torchvision import transforms
+import pandas as pd
 class MNISTDataset(BaseDataset):
     """`MNIST <http://yann.lecun.com/exdb/mnist/>`_ Dataset.
 
@@ -38,7 +39,7 @@ class MNISTDataset(BaseDataset):
         BaseDataset.__init__(self, opt)
         self.config = edict(load_config('MNIST_configuration.yaml', self.opt.config_dir))
         self.opt = opt
-        self.root = os.path.expanduser(os.path.join('./data','MNIST' ))
+        self.root = os.path.expanduser(os.path.join('.\data','MNIST' ))
         self.type = opt.mnist_mode
         self.transform = transform
         self.set_transform(transform=transforms.ToTensor())
@@ -216,3 +217,11 @@ def read_image_file(path):
         images = []
         parsed = np.frombuffer(data, dtype=np.uint8, offset=16)
         return torch.from_numpy(parsed).view(length, num_rows, num_cols)
+
+
+class MNISTDatasetLabels(MNISTDataset):
+    def __init__(self, opt, labels_dataset: pd.DataFrame):
+        MNISTDataset.__init__(self, opt)
+        # Load the single label dataset
+        self.k_ = opt.num_clusters
+        self.data = labels_dataset.copy(deep=True).drop(columns='Unnamed: 0')
