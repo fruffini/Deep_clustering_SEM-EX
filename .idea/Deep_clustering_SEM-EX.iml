@@ -13,9 +13,11 @@
       <sourceFolder url="file://$MODULE_DIR$/src/models/xAI/dataset" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/models/xAI/models" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/models/xAI/util" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/src/models/CNN_validation" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/models/DCEC/semantic_Globes" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/src/models/DCEC/notebooks" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/models/Clustering_Correlation_Analysis/data/DC_Results" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/models/Clustering_Correlation_Analysis/docs" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/models/Clustering_Correlation_Analysis/models" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/models/Clustering_Correlation_Analysis/src/notebooks" isTestSource="false" />
     </content>
     <orderEntry type="jdk" jdkName="Python 3.9 (envProject)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -27,5 +29,14 @@
   </component>
   <component name="PyDocumentationSettings">
     <option name="renderExternalDocumentation" value="true" />
+  </component>
+  <component name="PyNamespacePackagesService">
+    <option name="namespacePackageFolders">
+      <list>
+        <option value="$MODULE_DIR$/src/models/Clustering_Correlation_Analysis/data" />
+        <option value="$MODULE_DIR$/src/models/Clustering_Correlation_Analysis/src" />
+        <option value="$MODULE_DIR$/src/models/Clustering_Correlation_Analysis" />
+      </list>
+    </option>
   </component>
 </module>

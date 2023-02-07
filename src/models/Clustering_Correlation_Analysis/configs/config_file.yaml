@@ -1,0 +1,10 @@
+### CLARO Dataset   ###
+
+seed: 42
+
+validation:
+  mode: 'hold_out'
+
+data:
+  type: 'tabular'
+  data_dir: 'C:\Users\Ruffi\Desktop\Deep_clustering_SEM-EX\src\models\Clustering_Correlation_Analysis\data'
