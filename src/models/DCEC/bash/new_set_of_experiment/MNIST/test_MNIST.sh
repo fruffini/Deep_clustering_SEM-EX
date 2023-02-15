@@ -22,12 +22,10 @@ source bin/activate
 # Executes the code
 cd /mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/src/models/DCEC
 
-
-dat='/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/src/models/DCEC/data'
 rep='/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/reports'
 cof='/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX/configs'
 workdir='/mimer/NOBACKUP/groups/snic2022-5-277/fruffini/SEM-EX'
-dataset='CLARO'
+dataset='MNIST'
 echo "ID experiment: $1"
 echo "K initial: $2"
 echo "K final: $3"
@@ -50,6 +48,6 @@ k_final=$3
 exp_name='experiments_stage_2'
 # Train HERE YOU RUN YOUR PROGRAM
 
-python test.py --id_exp ID_${ID} --experiment_name=${exp_name} --phase=${phase} --k_0=${k_initial} --k_fin=${k_final} --embedded_dimension=${emb} --box_apply --AE_type=${arch} --gpu_ids=${str_ids} --dataset_name=${dataset} --config_dir=${cof} --workdir=${workdir} --reports_dir=${rep} --data_dir=${dat} --verbose
+python test.py --id_exp ID_${ID} --experiment_name=${exp_name} --phase=${phase} --k_0=${k_initial} --k_fin=${k_final} --embedded_dimension=${emb} --AE_type=${arch} --gpu_ids=${str_ids} --dataset_name=${dataset} --config_dir=${cof} --workdir=${workdir} --reports_dir=${rep} --verbose
 
 deactivate

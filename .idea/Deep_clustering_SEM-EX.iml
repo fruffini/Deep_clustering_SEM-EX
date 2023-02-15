@@ -18,6 +18,7 @@
       <sourceFolder url="file://$MODULE_DIR$/src/models/Clustering_Correlation_Analysis/docs" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/models/Clustering_Correlation_Analysis/models" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/models/Clustering_Correlation_Analysis/src/notebooks" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/models/Clustering_Correlation_Analysis/src/utils" isTestSource="false" />
     </content>
     <orderEntry type="jdk" jdkName="Python 3.9 (envProject)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -34,7 +35,6 @@
     <option name="namespacePackageFolders">
       <list>
         <option value="$MODULE_DIR$/src/models/Clustering_Correlation_Analysis/data" />
-        <option value="$MODULE_DIR$/src/models/Clustering_Correlation_Analysis/src" />
         <option value="$MODULE_DIR$/src/models/Clustering_Correlation_Analysis" />
       </list>
     </option>

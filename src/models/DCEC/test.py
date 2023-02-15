@@ -107,7 +107,7 @@ def iterative_evaluation_test():
             labels_dir = os.path.join(model.load_dir, 'labels')
             labels_file = os.path.join(labels_dir, 'data_clusters_labels_K_{0}_.xlsx'.format(k))
             # load labels information
-            if not os.path.exists(labels_file) and k == 16 and k == 17:
+            if not os.path.exists(labels_file):
                 labels_file = os.path.join(labels_dir, 'data_clusters_labels_K_{0}_.csv'.format(k))
                 labels_info = pd.read_csv(labels_file)
             else:
