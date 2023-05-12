@@ -5,7 +5,7 @@ import shutil
 import pathlib
 import numpy
 from easydict import EasyDict
-from util import util_general
+from src.models.DCEC.util import util_general
 
 
 class PathManager(object):

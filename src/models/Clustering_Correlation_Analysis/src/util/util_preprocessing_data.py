@@ -1,84 +1,23 @@
 import numpy as np
-from matplotlib import pyplot as plt
-from numpy import interp
-from sklearn.metrics import accuracy_score, roc_curve, auc
-from src.models.Clustering_Correlation_Analysis.src.util.util_models import train_classifier
+import pandas as pd
+from scipy.special import softmax
+
+def _Mode_Preprocessing_Selector(Mode=str):
+    if Mode == 'Normalize':
+        return Normalize
+    elif Mode == 'Standard':
+        return Identify  # todo scrivere funzione per la standardizzazione
+    elif Mode == 'Identity':
+        return Identify
+def Result_Matrix(Rows, Columns):
+    return pd.DataFrame(data=None, columns=Columns, index=Rows)
+def Identify(df):
+    return df.copy(), 0, 0
 
 
-def plot_training_acc_and_Combined_ROC_CURVE(X, Y, classifier, kf, Normalizing= False, Experiment_name= str):
-
-    tprs = []
-    aucs = []
-    accuracies = dict()
-    mean_fpr = np.linspace(0, 1, 100)
-    plt.figure(figsize=(10, 10))
-    # We spilt each FOLD by index
-    for i, (train, test) in enumerate(kf.split(X, Y)):
-        # normalization
-        X_train, max_, min_  = normalize(X.iloc[train]) if Normalizing else X.iloc[train], 0, 0
-        X_test, _, _ = normalize(X.iloc[test], max_ = max_, min_ = min_) if Normalizing else X.iloc[test], 0, 0
-
-        # Labels
-        y_train = Y.iloc[train]
-        y_test = Y.iloc[test]
-
-        # Fill NaN
-        X_train.fillna(0, inplace=True)
-        X_test.fillna(0, inplace=True)
 
 
-        # Train the model
-        probs_, y_pred = train_classifier(classifier, X_train, y_train, X_test)
-
-        # Accuracy Scores
-        accuracies[i] = accuracy_score(y_test, y_pred)
-
-        # Compute ROC curve and area the curve
-        fpr, tpr, thresholds = roc_curve(y_test, probs_[:, 1])
-        tprs.append(interp(mean_fpr, fpr, tpr))
-        tprs[-1][0] = 0.0
-        roc_auc = auc(fpr, tpr)
-        aucs.append(roc_auc)
-        plt.plot(
-            fpr, tpr, lw=1, alpha=0.3,
-            label='ROC fold %d (AUC = %0.2f)' % (i, roc_auc)
-            )
-
-        i += 1
-    plt.plot(
-        [0, 1], [0, 1], linestyle='--', lw=2, color='r',
-        label='Chance', alpha=.8
-        )
-
-    mean_tpr = np.mean(tprs, axis=0)
-    mean_tpr[-1] = 1.0
-    mean_auc = auc(mean_fpr, mean_tpr)
-    std_auc = np.std(aucs)
-    plt.plot(
-        mean_fpr, mean_tpr, color='b',
-        label=r'Mean ROC (AUC = %0.2f $\pm$ %0.2f)' % (mean_auc, std_auc),
-        lw=4, alpha=.8,
-        )
-
-    std_tpr = np.std(tprs, axis=0)
-    tprs_upper = np.minimum(mean_tpr + std_tpr, 1)
-    tprs_lower = np.maximum(mean_tpr - std_tpr, 0)
-    plt.fill_between(
-        mean_fpr, tprs_lower, tprs_upper, color='grey', alpha=.2,
-        label=r'$\pm$ 1 std. dev.'
-        )
-
-    plt.xlim([-0.01, 1.01])
-    plt.ylim([-0.01, 1.01])
-    plt.xlabel('False Positive Rate', fontsize=18)
-    plt.ylabel('True Positive Rate', fontsize=18)
-    plt.title(f'Cross-Validation ROC : {Experiment_name}', fontsize=18)
-    plt.legend(loc="lower right", prop={'size': 15})
-    plt.show()
-    return (accuracies, classifier)
-
-
-def normalize(df, min_=None, max_=None):
+def Normalize(df, min_=None, max_=None):
     result = df.copy()
     for feature_name in df.columns:
         max_value = df[feature_name].max() if max_ is None else max_
@@ -86,4 +25,53 @@ def normalize(df, min_=None, max_=None):
 
         result[feature_name] = (df[feature_name] - min_value) / (max_value - min_value)
 
-    return result, max_value, min_value
+    return tuple(result, max_value, min_value)
+
+
+def _Clustering_Labels_Data_processing_By_K(K_df, K_Selected, matrix_options=['boolean', 'softmax', 'counts']):
+
+    # return the dict with resulting DFs
+    Matrices_ = {option: None for option in matrix_options}
+    # Data for the Clusters configuration
+
+    # Dictionary ID -> Cluster Distribution
+    Dict_ID_to_labels = K_df.groupby('patient ID')['clusters_labels'].apply(list).to_dict()
+    Dict_labels_to_ID = K_df.groupby('clusters_labels')['patient ID'].apply(list).to_dict()
+    # This dict contains all the cluster where the patient has been discovered:
+    Dict_ID_to_labels_uniques = {keys: list(np.unique(values)) for keys, values in Dict_ID_to_labels.items()}
+    # This dict contains all the patients slices for each cluster:
+    Dict_labels_to_uniques_ID = {keys: list(np.unique(values)) for keys, values in Dict_labels_to_ID.items()}
+    # ANALyzing all the labels inside the clusters
+    # Labels Count
+    Dict_ID_to_labels_count = {keys: list(tuple(np.unique(values, return_counts=True))[1]) for keys, values in Dict_ID_to_labels.items()}
+    Dict_labels_to_uniques_count = {keys: list(tuple(np.unique(values, return_counts=True))[1]) for keys, values in Dict_labels_to_ID.items()}
+    # Softmax
+    Dict_ID_to_labels_softmax = {keys: list(softmax(tuple(np.unique(values, return_counts=True))[1])) for keys, values in Dict_ID_to_labels.items()}
+    Dict_labels_to_uniques_softmax = {keys: list(softmax(tuple(np.unique(values, return_counts=True))[1])) for keys, values in Dict_labels_to_ID.items()}
+    # Dataframe For Keys and new features
+    matrix_len = [len(Dict_ID_to_labels), int(K_Selected.split('_')[-1])]
+    # Separation For each Matrix type:
+    for option in Matrices_.keys():
+        New_features = pd.DataFrame(np.zeros(matrix_len), index=Dict_ID_to_labels.keys())
+        # Options matrices
+        for ID, softmax_values in Dict_ID_to_labels_softmax.items():
+            counts = Dict_ID_to_labels_uniques[ID]
+            if option == 'softmax':
+                for i, c in enumerate(counts):
+                    New_features.loc[ID, c] = softmax_values[i]
+                    New_features.index.name = 'ID paziente'
+                    New_features.fillna(0, inplace=True)
+                    Matrices_[option] = New_features
+            elif option == 'counts':
+                for i, c in enumerate(counts):
+                    New_features.loc[ID, c] = c
+                    New_features.index.name = 'ID paziente'
+                    New_features.fillna(0, inplace=True)
+                    Matrices_[option] = New_features
+            elif option == 'boolean':
+                for i, c in enumerate(counts):
+                    New_features.loc[ID, c] = 1
+                    New_features.index.name = 'ID paziente'
+                    New_features.fillna(0, inplace=True)
+                    Matrices_[option] = New_features
+    return Matrices_

@@ -19,6 +19,8 @@
       <sourceFolder url="file://$MODULE_DIR$/src/models/Clustering_Correlation_Analysis/models" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/models/Clustering_Correlation_Analysis/src/notebooks" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/models/Clustering_Correlation_Analysis/src/utils" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/models/Clustering_Correlation_Analysis/reports" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/Claro_Preprocessing_Data/CLARO_dataset_preparation" isTestSource="false" />
     </content>
     <orderEntry type="jdk" jdkName="Python 3.9 (envProject)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -36,6 +38,9 @@
       <list>
         <option value="$MODULE_DIR$/src/models/Clustering_Correlation_Analysis/data" />
         <option value="$MODULE_DIR$/src/models/Clustering_Correlation_Analysis" />
+        <option value="$MODULE_DIR$/Claro_Preprocessing_Data/CLARO_dataset_preparation/utils" />
+        <option value="$MODULE_DIR$/Claro_Preprocessing_Data/CLARO_dataset_preparation" />
+        <option value="$MODULE_DIR$/Claro_Preprocessing_Data" />
       </list>
     </option>
   </component>
